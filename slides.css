@@ -222,7 +222,7 @@ html, body {
   grid-auto-columns: 1fr;
   gap: 28px;
   flex: 1;
-  align-items: center;
+  align-items: stretch;       /* lige høje kort */
   margin-top: 12px;
 }
 .stat-card {
@@ -230,17 +230,20 @@ html, body {
   background: var(--bg-paper);
   box-shadow: var(--shadow-md);
   padding: 32px;
-  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;     /* indhold centreret lodret i kortet */
 }
 .stat-card.is-accent { background: var(--bg-accent); }
 .stat-card.is-primary { box-shadow: var(--shadow-accent); }
 .stat-card .num {
   font-family: var(--font-mono);
-  font-size: 80px;
+  font-size: 60px;             /* mindre + nowrap så lange værdier ("1,2 mio") ikke ombrydes */
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 .stat-card .num.is-up { color: var(--color-success); }
 .stat-card .num.is-down { color: var(--color-red); }
