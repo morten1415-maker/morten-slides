@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mortens Præsentationer — slide-system</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+    :root{
+      --ink:#000; --ink-soft:#333; --muted:#6b6b6b; --canvas:#f4f4f2;
+      --paper:#fff; --line:#e8e8e3; --red:#ff5757; --green:#066b43;
+      --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--canvas);font-family:var(--sans);color:var(--ink);
+         line-height:1.5;padding:64px 24px;display:flex;justify-content:center}
+    .wrap{width:100%;max-width:920px}
+    .kicker{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;
+            text-transform:uppercase;color:var(--muted)}
+    h1{font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:1.05;margin:14px 0 12px}
+    .lead{font-size:19px;color:var(--ink-soft);max-width:60ch;margin-bottom:48px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:680px){.grid{grid-template-columns:1fr}h1{font-size:38px}}
+    .card{display:block;background:var(--paper);border:2px solid var(--ink);
+          box-shadow:5px 5px 0 var(--ink);padding:28px;text-decoration:none;color:inherit;
+          transition:transform .08s,box-shadow .08s}
+    .card:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)}
+    .card--oes{box-shadow:5px 5px 0 var(--green)}
+    .card--oes:hover{box-shadow:6px 6px 0 var(--green)}
+    .card .tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+               text-transform:uppercase;color:var(--muted)}
+    .card--oes .tag{color:var(--green)}
+    .card h2{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:10px 0 8px}
+    .card p{font-size:15px;color:var(--ink-soft)}
+    .card .go{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:12px;
+              font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+              border-bottom:2px solid var(--ink)}
+    .card--oes .go{border-color:var(--green);color:var(--green)}
+    .meta{margin-top:48px;border-top:1px solid var(--line);padding-top:24px}
+    .meta h3{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+             text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+    .meta ul{list-style:none;display:flex;flex-wrap:wrap;gap:10px 24px}
+    .meta a{font-family:var(--mono);font-size:13px;color:var(--ink);text-decoration:none;
+            border-bottom:1px solid var(--line)}
+    .meta a:hover{border-color:var(--ink)}
+    footer{margin-top:40px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">Mortens Præsentationer · Slide-system</p>
+    <h1>Bærbar brutalisme<br>til slides.</h1>
+    <p class="lead">Et slide-system bygget på Mortens design system — sorte kanter, hårde
+      offset-shadows, IBM Plex. To stilarter, hver med sit eget galleri af alle slide-typer.</p>
+
+    <div class="grid">
+      <a class="card" href="template.html">
+        <span class="tag">Stil 01</span>
+        <h2>Primær præsentation stil</h2>
+        <p>Standard-stilen. Sort/hvid med rød signal-farve og gul highlight. 21 slide-typer:
+           titel, agenda, billede, timeline, KPI, tabel m.fl.</p>
+        <span class="go">Åbn deck →</span>
+      </a>
+
+      <a class="card card--oes" href="template-oes.html">
+        <span class="tag">Stil 02</span>
+        <h2>Økonomistyrelsen</h2>
+        <p>Samme stil med ØS-grøn som anker, officielt logo og Laks som signal-farve.
+           Grøn skygge på forsiden, grøn accent under titler.</p>
+        <span class="go">Åbn deck →</span>
+      </a>
+    </div>
+
+    <div class="meta">
+      <h3>Mere</h3>
+      <ul>
+        <li><a href="PRESENTATIONS.md">Brandguide — Primær stil</a></li>
+        <li><a href="PRESENTATIONS-OES.md">Brandguide — Økonomistyrelsen</a></li>
+        <li><a href="morten-ds-example.pptx">PowerPoint — Primær (.pptx)</a></li>
+        <li><a href="oes-example.pptx">PowerPoint — ØS (.pptx)</a></li>
+      </ul>
+    </div>
+
+    <footer>Brug pil-taster / mellemrum / klik til at navigere i decks · Cmd/Ctrl+P → print til PDF</footer>
+  </div>
+</body>
+</html>

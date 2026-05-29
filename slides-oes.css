@@ -1,0 +1,85 @@
+/* =====================================================
+   Økonomistyrelsen-tema — overlay på slides.css
+   = Primær præsentation stil + ØS-grøn + logo.
+   Grøn bruges SPARSOMT: section-dividers, titel-topkant,
+   logo, positive tal, CTA. Alt andet er som den primære stil.
+   Brug:  <link rel="stylesheet" href="slides-oes.css">
+          (importerer slides.css selv — du behøver kun denne ene)
+   ===================================================== */
+
+@import url('slides.css');
+
+:root {
+  /* ØS identitetsfarve = brand-anker */
+  --color-brand: #066b43;          /* ØS-grøn */
+  --color-brand-soft: #b3e8ca;     /* lys grøn (supplerende) */
+
+  /* Signal-swap: vores røde -> ØS' egen "Laks". Samme logik, ØS' egen koral. */
+  --color-red: #ed5e66;            /* Laks — danger, primary shadow, vigtigt */
+  --shadow-accent: 5px 5px 0 var(--color-red);
+
+  /* Positiv/vækst bærer nu ØS-identitet */
+  --color-success: #066b43;
+}
+
+/* Kun ÉN overskrift pr. slide: den sorte titel. Skjul kicker-eyebrow'en over
+   titlerne helt. (Behold sub-labels i kolonner og billed-caption — de er ikke overskrifter.)
+   Grøn lever på titel-accent, sektioner, logo, grøn skygge og CTA. */
+.slide > .kicker,
+.slide--title .frame > .kicker,
+.slide--cover .overlay > .kicker { display: none; }
+.slide--image-full .caption .kicker { color: #fff; }   /* hvid i den sorte caption-stribe */
+
+/* Grøn titel-accent: kort bjælke under content-titler, flush med titlens venstrekant */
+.slide-title { position: relative; }
+.slide-title::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 6px;
+  margin: 18px 0 0 0;
+  background: var(--color-brand);
+}
+
+/* Title: grøn offset-shadow på rammen (i stedet for grøn topkant — renere) */
+.slide--title .frame { box-shadow: 8px 8px 0 var(--color-brand); }
+
+/* ---------- Section divider: ØS-grøn brand-flade (det stærke brand-moment) ---------- */
+.slide--section.is-brand {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+.slide--section.is-brand .kicker { color: rgba(255, 255, 255, 0.75); }
+.slide--section.is-brand .num { color: rgba(255, 255, 255, 0.9); }
+.slide--section.is-brand .slide__footer {
+  color: rgba(255, 255, 255, 0.7);
+  border-top-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- Officielt ØS-logo nederst til højre (på slides med footer/plads) ----------
+   Grøn logo på lyse slides, hvid logo på den grønne section-flade.
+   Cover og full-bleed billed-slides har ingen footer -> intet logo (ingen plads). */
+.slide__footer { position: relative; }
+.slide__footer::after {
+  content: '';
+  position: absolute;
+  right: 0; bottom: -2px;
+  width: 150px; height: 34px;
+  background: url('assets/oes-logo-green.png') right bottom / contain no-repeat;
+}
+.slide--section.is-brand .slide__footer::after {
+  background-image: url('assets/oes-logo-white.png');
+}
+/* Skjul den redundante deck-titel i footeren (logoet bærer navnet);
+   nummeret rykker til venstre, logoet sidder til højre */
+.slide__footer > span:first-child { display: none; }
+
+/* Closing CTA: ØS-grøn flade i stedet for sort (brand-sign-off) */
+.slide--closing .cta {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+/* Fremhævet stat-kort: behold gul highlight; primary-shadow er nu Laks (via --color-red).
+   Ingen ekstra regler nødvendige — arver fra slides.css gennem token-swap. */

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morten DS — Slide-galleri</title>
+  <link rel="stylesheet" href="slides.css" />
+</head>
+<body>
+  <div class="deck">
+    <div class="deck__stage">
+
+      <!-- 1. TITLE -->
+      <section class="slide slide--title is-active">
+        <div class="frame">
+          <p class="kicker">Morten Design System · 2026</p>
+          <h1 class="slide-display">Bærbar<br>brutalisme.</h1>
+          <p class="lead">Et komplet slide-bibliotek — ikke bare et UI-system sat ind i slides.</p>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>01</span></div>
+      </section>
+
+      <!-- 2. AGENDA -->
+      <section class="slide slide--agenda">
+        <p class="kicker">Indhold</p>
+        <h2 class="slide-title">Agenda</h2>
+        <div class="list">
+          <div class="row"><span class="n">01</span><span class="t">Grundprincipper</span></div>
+          <div class="row is-current"><span class="n">02</span><span class="t">Slide-typer til indhold</span></div>
+          <div class="row"><span class="n">03</span><span class="t">Billed-layouts</span></div>
+          <div class="row"><span class="n">04</span><span class="t">Data &amp; resultater</span></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>02</span></div>
+      </section>
+
+      <!-- 3. SECTION -->
+      <section class="slide slide--section is-dark">
+        <p class="num">01</p>
+        <p class="kicker">Sektion</p>
+        <h2 class="slide-display">Indhold</h2>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>03</span></div>
+      </section>
+
+      <!-- 4. CONTENT -->
+      <section class="slide slide--content">
+        <p class="kicker">Princip</p>
+        <h2 class="slide-title">Reservér de stærke elementer</h2>
+        <ul class="bullets">
+          <li>Maks. én rød-shadow per slide — det er din primary action.</li>
+          <li>Maks. én gul flade per slide — det vigtigste element.</li>
+          <li class="is-accent">Hvis alt råber, lytter ingen.</li>
+          <li>Tal er altid mono + tabular-nums.</li>
+        </ul>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>04</span></div>
+      </section>
+
+      <!-- 5. SPLIT -->
+      <section class="slide slide--split">
+        <p class="kicker">Typografi</p>
+        <h2 class="slide-title">Mono er system. Sans er indhold.</h2>
+        <div class="cols">
+          <div class="col"><p class="kicker">Mono</p><p class="body">Labels, metadata, tal, status. Altid uppercase med letter-spacing.</p></div>
+          <div class="divider"></div>
+          <div class="col"><p class="kicker">Sans</p><p class="body">Overskrifter, brødtekst, bullets. Naturlig læsning.</p></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>05</span></div>
+      </section>
+
+      <!-- 6. FEATURE-KORT -->
+      <section class="slide slide--cards">
+        <p class="kicker">Funktioner</p>
+        <h2 class="slide-title">Tre kort med ikon-plads</h2>
+        <div class="grid">
+          <div class="feature"><div class="icon"></div><div class="ftitle">Hurtig</div><div class="fbody">Offset-shadows og skarpe kanter gør hierarkiet øjeblikkeligt læsbart.</div></div>
+          <div class="feature is-accent"><div class="icon"></div><div class="ftitle">Distinkt</div><div class="fbody">Det fremhævede kort bruger gul flade — kun ét per slide.</div></div>
+          <div class="feature"><div class="icon"></div><div class="ftitle">Konsistent</div><div class="fbody">Samme tokens som UI-systemet, skaleret til projektor.</div></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>06</span></div>
+      </section>
+
+      <!-- 7. TIMELINE -->
+      <section class="slide slide--timeline">
+        <p class="kicker">Proces</p>
+        <h2 class="slide-title">Fire trin</h2>
+        <div class="track">
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q1</div><div class="what">Research</div><div class="desc">Indsigt og behov afdækkes.</div></div>
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q2</div><div class="what">Design</div><div class="desc">Koncept og prototyper.</div></div>
+          <div class="step is-current"><div class="dot"></div><div class="line"></div><div class="when">Q3</div><div class="what">Build</div><div class="desc">Vi er her nu.</div></div>
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q4</div><div class="what">Launch</div><div class="desc">Udrulning og læring.</div></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>07</span></div>
+      </section>
+
+      <!-- 8. SAMMENLIGNING -->
+      <section class="slide slide--compare">
+        <p class="kicker">Valg</p>
+        <h2 class="slide-title">Før vs. efter</h2>
+        <div class="cols">
+          <div class="compare-card">
+            <div class="chead">Før</div>
+            <div class="citem"><span class="mk no"></span>Spredte systemer</div>
+            <div class="citem"><span class="mk no"></span>Manuelle flows</div>
+            <div class="citem"><span class="mk yes"></span>Kendt af alle</div>
+          </div>
+          <div class="compare-card is-win">
+            <div class="chead">Efter</div>
+            <div class="citem"><span class="mk yes"></span>Samlet platform</div>
+            <div class="citem"><span class="mk yes"></span>Automatiske flows</div>
+            <div class="citem"><span class="mk yes"></span>Realtids-overblik</div>
+          </div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>08</span></div>
+      </section>
+
+      <!-- 9. SECTION (billed-kapitel) -->
+      <section class="slide slide--section is-yellow">
+        <p class="num">02</p>
+        <p class="kicker">Sektion</p>
+        <h2 class="slide-display">Billed-layouts</h2>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>09</span></div>
+      </section>
+
+      <!-- 10. COVER / HERO med baggrundsbillede -->
+      <section class="slide slide--cover">
+        <div class="img" data-label="Baggrundsbillede 16:9"><!-- <img src="..."> --></div>
+        <div class="overlay">
+          <p class="kicker">Kapitel</p>
+          <h2 class="slide-display">Stort billede,<br>stærk åbning.</h2>
+          <p class="lead">Overlay-boks med hård shadow oven på fuldt baggrundsbillede.</p>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>10</span></div>
+      </section>
+
+      <!-- 11. FULL-BLEED billede + caption -->
+      <section class="slide slide--image-full">
+        <div class="img" data-label="Full-bleed billede"><!-- <img src="..."> --></div>
+        <div class="caption"><span class="kicker">Foto</span><span class="t">Caption i sort stribe — mono-kicker + titel.</span></div>
+      </section>
+
+      <!-- 12. BILLEDE + TEKST -->
+      <section class="slide slide--image-text">
+        <p class="kicker">Case</p>
+        <h2 class="slide-title">Billede til venstre, tekst til højre</h2>
+        <div class="layout">
+          <div class="media img" data-label="Billede"><!-- <img src="..."> --></div>
+          <div class="text-col">
+            <ul class="bullets" style="margin-top:0">
+              <li>Halv-til-halv layout med skarpt billed-felt.</li>
+              <li>Brug <code>is-image-left</code> for spejlet variant.</li>
+              <li class="is-accent">Billedet får 2px sort kant som alt andet.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>12</span></div>
+      </section>
+
+      <!-- 13. BILLED-GRID -->
+      <section class="slide slide--image-grid cols-3">
+        <p class="kicker">Galleri</p>
+        <h2 class="slide-title">Billed-grid</h2>
+        <div class="grid">
+          <div class="img" data-label="01"></div>
+          <div class="img" data-label="02"></div>
+          <div class="img" data-label="03"></div>
+          <div class="img" data-label="04"></div>
+          <div class="img" data-label="05"></div>
+          <div class="img" data-label="06"></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>13</span></div>
+      </section>
+
+      <!-- 14. TESTIMONIAL -->
+      <section class="slide slide--testimonial">
+        <p class="kicker">Udtalelse</p>
+        <div class="layout">
+          <div class="avatar img" data-label="Portræt"><!-- <img src="..."> --></div>
+          <div>
+            <blockquote class="quote">“Systemet gør det nemt at lave slides der ser bevidste ud.”</blockquote>
+            <div class="who"><div class="name">Morten Mølgaard</div><div class="role">Designer</div></div>
+          </div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>14</span></div>
+      </section>
+
+      <!-- 15. SECTION -->
+      <section class="slide slide--section is-dark">
+        <p class="num">03</p>
+        <p class="kicker">Sektion</p>
+        <h2 class="slide-display">Data &amp; resultater</h2>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>15</span></div>
+      </section>
+
+      <!-- 16. STORT TAL -->
+      <section class="slide slide--bignum">
+        <p class="kicker">Nøgletal</p>
+        <div class="big is-up">+34<span class="unit">%</span></div>
+        <p class="sub">Vækst i adoption år over år — ét tal, fuld fokus.</p>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>16</span></div>
+      </section>
+
+      <!-- 17. STATS / KPI -->
+      <section class="slide slide--stats">
+        <p class="kicker">Resultater · Q1</p>
+        <h2 class="slide-title">Tre tal der tæller</h2>
+        <div class="cards">
+          <div class="stat-card"><div class="num">128</div><div class="stat-label">Komponenter</div></div>
+          <div class="stat-card is-primary is-accent"><div class="num is-up">+34%</div><div class="stat-label">Adoption</div></div>
+          <div class="stat-card"><div class="num">99.9</div><div class="stat-label">Uptime %</div></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>17</span></div>
+      </section>
+
+      <!-- 18. SØJLEDIAGRAM -->
+      <section class="slide slide--bars">
+        <p class="kicker">Fordeling</p>
+        <h2 class="slide-title">Brug pr. komponent</h2>
+        <div class="chart">
+          <div class="bar-row"><span class="lbl">Button</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">1.240</span></div>
+          <div class="bar-row is-accent"><span class="lbl">DataTable</span><span class="track"><span class="fill" style="width:41%"></span></span><span class="val">512</span></div>
+          <div class="bar-row"><span class="lbl">Modal</span><span class="track"><span class="fill" style="width:31%"></span></span><span class="val">388</span></div>
+          <div class="bar-row"><span class="lbl">Palette</span><span class="track"><span class="fill" style="width:16%"></span></span><span class="val">204</span></div>
+        </div>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>18</span></div>
+      </section>
+
+      <!-- 19. TABEL -->
+      <section class="slide slide--table">
+        <p class="kicker">Oversigt</p>
+        <h2 class="slide-title">Komponent-status</h2>
+        <table>
+          <thead><tr><th>Komponent</th><th>Ejer</th><th class="num">Brug</th><th class="num">Issues</th></tr></thead>
+          <tbody>
+            <tr><td>Button</td><td>Core</td><td class="num">1.240</td><td class="num">2</td></tr>
+            <tr class="is-highlight"><td>DataTable</td><td>Core</td><td class="num">512</td><td class="num">7</td></tr>
+            <tr><td>Modal</td><td>Core</td><td class="num">388</td><td class="num">1</td></tr>
+          </tbody>
+        </table>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>19</span></div>
+      </section>
+
+      <!-- 20. STATEMENT -->
+      <section class="slide slide--statement">
+        <blockquote class="quote">Den røde shadow betyder “tryk her”. Brug den én gang.</blockquote>
+        <p class="source">— Designprincip nr. 3</p>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>20</span></div>
+      </section>
+
+      <!-- 21. CLOSING -->
+      <section class="slide slide--closing">
+        <p class="kicker">Tak</p>
+        <h2 class="slide-display">Lad os bygge.</h2>
+        <a class="cta">morten@design.system →</a>
+        <div class="slide__footer"><span>Slide-galleri</span><span data-slide-no>21</span></div>
+      </section>
+
+    </div>
+  </div>
+  <script src="slides.js"></script>
+</body>
+</html>

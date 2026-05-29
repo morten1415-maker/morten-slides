@@ -1,0 +1,573 @@
+/* =====================================================
+   Morten DS — Slide-framework
+   Bygget på ../styles/tokens.css. Bærbar brutalisme på 16:9.
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;700&display=swap');
+
+:root {
+  /* Genbrug af design-system-tokens */
+  --bg-canvas: #f4f4f2;
+  --bg-paper: #ffffff;
+  --bg-accent: #fef3c7;
+  --bg-soft-red: #fff5f5;
+  --bg-soft-green: #d1fae5;
+  --color-ink: #000000;
+  --color-ink-soft: #333333;
+  --color-muted: #6b6b6b;
+  --color-line-soft: #e8e8e3;
+  --color-red: #ff5757;
+  --color-success: #16a34a;
+
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+  --font-serif: 'IBM Plex Serif', Georgia, serif;
+
+  --shadow-sm: 3px 3px 0 var(--color-ink);
+  --shadow-md: 5px 5px 0 var(--color-ink);
+  --shadow-lg: 8px 8px 0 var(--color-ink);
+  --shadow-accent: 5px 5px 0 var(--color-red);
+
+  /* Slide-canvas (forstørret type-skala) */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --slide-pad: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #111;          /* mørk "scene" rundt om sliden */
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  overflow: hidden;
+}
+
+/* ---------- Deck-stage: centrerer + skalerer canvas ---------- */
+.deck {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.deck__stage {
+  width: var(--slide-w);
+  height: var(--slide-h);
+  position: relative;
+  transform-origin: center center;   /* JS sætter scale */
+}
+
+/* ---------- Slide ---------- */
+.slide {
+  position: absolute;
+  inset: 0;
+  width: var(--slide-w);
+  height: var(--slide-h);
+  background: var(--bg-canvas);
+  padding: var(--slide-pad);
+  display: none;
+  flex-direction: column;
+  border: 3px solid var(--color-ink);
+}
+.slide.is-active { display: flex; }
+
+/* ---------- Fælles tekst-roller ---------- */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 20px;
+}
+.slide-title {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.slide-h2 {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.lead {
+  font-size: 28px;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+  max-width: 22ch;
+}
+.body {
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+
+/* Bullets — små sorte firkanter, aldrig runde prikker */
+.bullets { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 28px; }
+.bullets li {
+  position: relative;
+  padding-left: 34px;
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+.bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 11px;
+  width: 14px; height: 14px;
+  background: var(--color-ink);
+}
+.bullets li.is-accent::before { background: var(--color-red); }
+
+/* Footer-stribe */
+.slide__footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-line-soft);
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* ===== 1. Title ===== */
+.slide--title { justify-content: center; }
+.slide--title .frame {
+  border: 3px solid var(--color-ink);
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-paper);
+  padding: 56px;
+  align-self: flex-start;
+  max-width: 90%;
+}
+.slide--title .slide-display {
+  font-size: 92px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+.slide--title .lead { margin-top: 32px; font-size: 26px; }
+
+/* ===== 2. Section divider ===== */
+.slide--section { justify-content: center; align-items: flex-start; gap: 16px; }
+.slide--section.is-dark { background: var(--color-ink); border-color: var(--color-ink); color: var(--bg-paper); }
+.slide--section.is-yellow { background: var(--bg-accent); }
+.slide--section .num {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.slide--section .slide-display {
+  font-size: 88px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.slide--section.is-dark .kicker,
+.slide--section.is-dark .slide__footer { color: #bdbdbd; }
+.slide--section.is-dark .slide__footer { border-top-color: #444; }
+
+/* ===== 3. Content ===== */
+.slide--content { }
+
+/* ===== 4. Split / two-column ===== */
+.slide--split .cols {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 40px;
+  flex: 1;
+  align-items: start;
+  margin-top: 12px;
+}
+.slide--split .divider { background: var(--color-line-soft); width: 1px; height: 100%; }
+.slide--split .col .kicker { margin-bottom: 16px; }
+
+/* ===== 5. Statement / quote ===== */
+.slide--statement { justify-content: center; }
+.slide--statement .quote {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  max-width: 26ch;
+  border-left: 6px solid var(--color-red);
+  padding-left: 32px;
+}
+.slide--statement .source {
+  margin-top: 28px;
+  margin-left: 38px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* ===== 6. Stats / KPI ===== */
+.slide--stats .cards {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 28px;
+  flex: 1;
+  align-items: center;
+  margin-top: 12px;
+}
+.stat-card {
+  border: 2px solid var(--color-ink);
+  background: var(--bg-paper);
+  box-shadow: var(--shadow-md);
+  padding: 32px;
+  height: fit-content;
+}
+.stat-card.is-accent { background: var(--bg-accent); }
+.stat-card.is-primary { box-shadow: var(--shadow-accent); }
+.stat-card .num {
+  font-family: var(--font-mono);
+  font-size: 80px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-card .num.is-up { color: var(--color-success); }
+.stat-card .num.is-down { color: var(--color-red); }
+.stat-card .stat-label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-top: 16px;
+}
+
+/* ===== 7. Table ===== */
+.slide--table table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid var(--color-ink);
+  margin-top: 20px;
+  font-size: 19px;
+}
+.slide--table thead th {
+  background: var(--color-ink);
+  color: var(--bg-paper);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 14px 18px;
+}
+.slide--table th.num, .slide--table td.num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.slide--table tbody td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-line-soft);
+  background: var(--bg-paper);
+}
+.slide--table tbody tr.is-highlight td { background: var(--bg-accent); }
+
+/* ===== 8. Closing ===== */
+.slide--closing { justify-content: center; align-items: flex-start; }
+.slide--closing .slide-display {
+  font-size: 96px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.slide--closing .cta {
+  margin-top: 32px;
+  display: inline-block;
+  background: var(--color-ink);
+  color: var(--bg-paper);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 16px 28px;
+  border: 2px solid var(--color-ink);
+  border-radius: 4px;
+  box-shadow: var(--shadow-accent);
+}
+
+/* =====================================================
+   PRÆSENTATIONS-ELEMENTER (ud over UI-porteringen)
+   Billed-slides, agenda, kort, timeline, sammenligning,
+   store tal, søjler, testimonial. Samme brutalist-DNA.
+   ===================================================== */
+
+/* ---------- Billed-placeholder (genbruges overalt) ---------- */
+.img {
+  position: relative;
+  background: var(--color-line-soft);
+  border: 2px solid var(--color-ink);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.img > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Placeholder-label vises kun når der ikke er et <img> */
+.img::after {
+  content: attr(data-label);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.img:has(img)::after { content: none; }
+/* lille sort hjørne-markør så placeholderen ser "system" ud */
+.img::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 12px;
+  width: 18px; height: 18px;
+  border-top: 3px solid var(--color-ink);
+  border-left: 3px solid var(--color-ink);
+}
+
+/* ===== 9. Cover / hero med baggrundsbillede ===== */
+.slide--cover { padding: 0; }
+.slide--cover .img { position: absolute; inset: 0; border: none; }
+.slide--cover .img::before { display: none; }
+.slide--cover .overlay {
+  position: absolute;
+  left: 56px; bottom: 56px;
+  background: var(--bg-paper);
+  border: 3px solid var(--color-ink);
+  box-shadow: var(--shadow-lg);
+  padding: 44px 48px;
+  max-width: 64%;
+}
+.slide--cover .slide-display { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.06; }
+.slide--cover .overlay .kicker { margin-bottom: 16px; }
+.slide--cover .overlay .lead { margin-top: 22px; font-size: 22px; line-height: 1.3; }
+
+/* ===== 10. Full-bleed billede med titel-overlay ===== */
+.slide--image-full { padding: 0; }
+.slide--image-full .img { position: absolute; inset: 0; border: none; }
+.slide--image-full .img::before { display: none; }
+.slide--image-full .caption {
+  position: absolute;
+  left: 0; bottom: 48px;
+  background: var(--color-ink);
+  color: var(--bg-paper);
+  padding: 14px 24px;
+  display: flex; gap: 16px; align-items: baseline;
+}
+.slide--image-full .caption .kicker { color: var(--color-red); margin: 0; }
+.slide--image-full .caption .t { font-size: 22px; font-weight: 600; }
+
+/* ===== 11. Billede + tekst (side om side) ===== */
+.slide--image-text .layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 44px;
+  flex: 1;
+  margin-top: 8px;
+  align-items: stretch;
+}
+.slide--image-text.is-image-left .layout { direction: rtl; }
+.slide--image-text.is-image-left .layout > * { direction: ltr; }
+.slide--image-text .media { min-height: 380px; }
+.slide--image-text .text-col { display: flex; flex-direction: column; justify-content: center; }
+
+/* ===== 12. Billed-grid / galleri ===== */
+.slide--image-grid .grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 20px;
+  flex: 1;
+  margin-top: 12px;
+}
+.slide--image-grid.cols-3 .grid { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ===== 13. Agenda / indholdsfortegnelse ===== */
+.slide--agenda .list { margin-top: 20px; flex: 1; }
+.slide--agenda .row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: baseline;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+.slide--agenda .row .n {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+.slide--agenda .row .t { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+.slide--agenda .row.is-current .n { color: var(--color-red); }
+.slide--agenda .row.is-current .t { }
+
+/* ===== 14. Feature-kort (3-op) ===== */
+.slide--cards .grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 24px;
+  flex: 1;
+  margin-top: 16px;
+  align-items: stretch;
+}
+.feature {
+  border: 2px solid var(--color-ink);
+  background: var(--bg-paper);
+  box-shadow: var(--shadow-sm);
+  padding: 26px;
+  display: flex; flex-direction: column;
+}
+.feature.is-accent { background: var(--bg-accent); }
+.feature .icon {
+  width: 44px; height: 44px;
+  background: var(--color-ink);
+  margin-bottom: 18px;
+}
+.feature.is-accent .icon { background: var(--color-red); }
+.feature .ftitle { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.feature .fbody { font-size: 17px; line-height: 1.4; color: var(--color-ink-soft); margin-top: 10px; }
+
+/* ===== 15. Timeline / proces-trin ===== */
+.slide--timeline .track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0;
+  flex: 1;
+  align-items: start;
+  margin-top: 36px;
+}
+.step { position: relative; padding-right: 24px; }
+.step .dot {
+  width: 24px; height: 24px;
+  background: var(--bg-paper);
+  border: 3px solid var(--color-ink);
+  position: relative; z-index: 2;
+}
+.step.is-current .dot { background: var(--color-red); border-color: var(--color-red); }
+.step .line {
+  position: absolute;
+  top: 10px; left: 24px; right: 0;
+  height: 3px; background: var(--color-ink);
+}
+.step:last-child .line { display: none; }
+.step .when {
+  font-family: var(--font-mono);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 18px 0 6px;
+}
+.step .what { font-size: 18px; font-weight: 600; padding-right: 20px; }
+.step .desc { font-size: 15px; color: var(--color-ink-soft); margin-top: 6px; padding-right: 20px; }
+
+/* ===== 16. Sammenligning (to kolonner, check/kryds) ===== */
+.slide--compare .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; margin-top: 16px; }
+.compare-card {
+  border: 2px solid var(--color-ink);
+  background: var(--bg-paper);
+  padding: 26px;
+  display: flex; flex-direction: column;
+}
+.compare-card.is-win { box-shadow: var(--shadow-accent); }
+.compare-card .chead {
+  font-family: var(--font-mono);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding-bottom: 14px; margin-bottom: 14px;
+  border-bottom: 2px solid var(--color-ink);
+}
+.compare-card .citem { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; font-size: 18px; }
+.compare-card .mk { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.compare-card .mk.yes { background: var(--color-success); }
+.compare-card .mk.no { background: var(--color-red); }
+
+/* ===== 17. Stort tal (single focal stat) ===== */
+.slide--bignum { justify-content: center; }
+.slide--bignum .big {
+  font-family: var(--font-mono);
+  font-size: 200px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.slide--bignum .big .unit { font-size: 90px; }
+.slide--bignum .big.is-up { color: var(--color-success); }
+.slide--bignum .big.is-down { color: var(--color-red); }
+.slide--bignum .sub { font-size: 26px; color: var(--color-ink-soft); margin-top: 12px; max-width: 30ch; }
+
+/* ===== 18. Søjlediagram (vandret) ===== */
+.slide--bars .chart { margin-top: 28px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.bar-row { display: grid; grid-template-columns: 200px 1fr 90px; align-items: center; gap: 18px; }
+.bar-row .lbl { font-size: 18px; }
+.bar-row .track { height: 34px; background: var(--bg-paper); border: 2px solid var(--color-ink); }
+.bar-row .fill { height: 100%; background: var(--color-ink); }
+.bar-row.is-accent .fill { background: var(--color-red); }
+.bar-row .val {
+  font-family: var(--font-mono); font-weight: 700;
+  font-variant-numeric: tabular-nums; text-align: right; font-size: 18px;
+}
+
+/* ===== 19. Testimonial / citat med portræt ===== */
+.slide--testimonial .layout { display: grid; grid-template-columns: 220px 1fr; gap: 40px; flex: 1; align-items: center; }
+.slide--testimonial .avatar { width: 220px; height: 220px; }
+.slide--testimonial .quote {
+  font-size: 34px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;
+  border-left: 6px solid var(--color-red); padding-left: 28px;
+}
+.slide--testimonial .who { margin-top: 22px; margin-left: 34px; }
+.slide--testimonial .who .name { font-size: 18px; font-weight: 700; }
+.slide--testimonial .who .role {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-muted); margin-top: 4px;
+}
+
+/* ---------- Deck-chrome (uden for sliden) ---------- */
+.deck__hud {
+  position: fixed;
+  bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #888;
+  z-index: 10;
+}
+.deck__hud .bar { width: 160px; height: 4px; background: #333; }
+.deck__hud .bar > i { display: block; height: 100%; background: var(--color-red); width: 0; }
+
+@media print {
+  html, body { background: #fff; overflow: visible; }
+  .deck, .deck__stage { position: static; transform: none !important; display: block; }
+  .slide { display: flex !important; page-break-after: always; box-shadow: none; margin: 0 auto; }
+  .deck__hud { display: none; }
+}
