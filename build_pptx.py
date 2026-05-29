@@ -12,7 +12,7 @@ Brug:    se deck.example.py — opret en Deck, kald .title()/.content()/... , ka
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 import copy
@@ -408,6 +408,10 @@ class Deck:
             if c.get("trend") == "down": num_col = self.signal
             nb = self._box(slide, x + Inches(0.3), top + Inches(0.35),
                            Emu(int(cw - Inches(0.6))), Inches(1.3))
+            # Auto-skrump: lange værdier ("1,2 mio") krymper til at passe i kortet
+            # uanset skrifttype, i stedet for at ombryde/flyde over.
+            nb.text_frame.word_wrap = False
+            nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
             _txt(nb.text_frame, c["num"], font=FONT_MONO, size=60, bold=True, color=num_col)
             lb = self._box(slide, x + Inches(0.3), top + Inches(1.75),
                            Emu(int(cw - Inches(0.6))), Inches(0.7))
@@ -674,6 +678,8 @@ class Deck:
         if trend == "up": col = self.success
         if trend == "down": col = self.signal
         nb = self._box(slide, MARGIN, Inches(2.1), Inches(11.5), Inches(2.8))
+        nb.text_frame.word_wrap = False
+        nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE   # langt tal krymper til at passe
         _txt(nb.text_frame, value, font=FONT_MONO, size=150, bold=True, color=col, line_pct=0.9)
         if sub:
             sb = self._box(slide, MARGIN, Inches(5.2), Inches(9), Inches(1.0))
