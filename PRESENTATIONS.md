@@ -38,7 +38,7 @@ De ufravigelige regler fra UI-guiden gælder også her:
 - **Aspect ratio: 16:9.** HTML-canvas = `1280 × 720` px (skaleres til viewport). PPTX = `13.333 × 7.5 tommer`.
 - Baggrund: `--bg-canvas` (#f4f4f2) som standard. Sektion-dividers må bruge sort eller gul fuldflade.
 - **Sikker margin:** mindst 64px (≈0.66") luft til alle kanter. Indhold lever i et indre felt.
-- Hver slide har en **footer-stribe** (mono, lille): venstre = deck-titel, højre = slide-nr `04 / 18`.
+- Hver slide har en **footer-stribe** (mono, lille): deck-titel til venstre. (Intet side-nummer.)
 
 ---
 

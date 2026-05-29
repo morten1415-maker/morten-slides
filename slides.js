@@ -10,24 +10,18 @@
 
   let index = 0;
 
-  // HUD (slide-tæller + progress-bar)
+  // HUD (kun progress-bar — intet side-nummer)
   const hud = document.createElement('div');
   hud.className = 'deck__hud';
-  hud.innerHTML = '<span class="count"></span><span class="bar"><i></i></span>';
+  hud.innerHTML = '<span class="bar"><i></i></span>';
   document.body.appendChild(hud);
-  const countEl = hud.querySelector('.count');
   const barEl = hud.querySelector('.bar > i');
 
   function pad(n) { return String(n).padStart(2, '0'); }
 
   function render() {
     slides.forEach((s, i) => s.classList.toggle('is-active', i === index));
-    countEl.textContent = pad(index + 1) + ' / ' + pad(slides.length);
     barEl.style.width = ((index + 1) / slides.length * 100) + '%';
-    // Auto-udfyld footer-slidenummer hvis footeren har en [data-slide-no]
-    const active = slides[index];
-    const noEl = active.querySelector('[data-slide-no]');
-    if (noEl) noEl.textContent = pad(index + 1) + ' / ' + pad(slides.length);
     location.hash = '#' + (index + 1);
   }
 

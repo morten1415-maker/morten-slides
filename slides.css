@@ -139,6 +139,8 @@ html, body {
   text-transform: uppercase;
   color: var(--color-muted);
 }
+/* Side-nummer fjernet */
+.slide__footer [data-slide-no] { display: none; }
 
 /* ===== 1. Title ===== */
 .slide--title { justify-content: center; }

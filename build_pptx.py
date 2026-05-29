@@ -245,10 +245,7 @@ class Deck:
         y = SLIDE_H - Inches(0.62)
         logo = self._logo_path_for(dark)
         if logo:
-            # ØS: slide-nummer nederst til venstre, officielt logo nederst til højre
-            nb = self._box(slide, MARGIN, y, Inches(3), Inches(0.4))
-            _txt(nb.text_frame, "%02d" % self._n, font=FONT_MONO, size=11,
-                 color=col, mono_label=True)
+            # ØS: officielt logo nederst til højre (intet side-nummer)
             lw = Inches(1.55)                       # bredde; højde efter aspect
             from PIL import Image as _PILImage
             try:
@@ -259,11 +256,9 @@ class Deck:
             slide.shapes.add_picture(logo, SLIDE_W - MARGIN - lw,
                                      y + Inches(0.04), width=lw, height=lh)
         else:
+            # deck-titel nederst til venstre (intet side-nummer)
             left = self._box(slide, MARGIN, y, Inches(8), Inches(0.4))
             _txt(left.text_frame, self.footer, font=FONT_MONO, size=11, color=col, mono_label=True)
-            right = self._box(slide, SLIDE_W - Inches(2.5), y, Inches(1.84), Inches(0.4))
-            _txt(right.text_frame, "%02d" % self._n, font=FONT_MONO, size=11, color=col,
-                 align=PP_ALIGN.RIGHT, mono_label=True)
 
     def _accent(self, slide, y=Inches(2.02), x=None):
         """Kort grøn accent-bjælke under en slide-titel (kun brand-tema).
