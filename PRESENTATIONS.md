@@ -9,12 +9,16 @@
 
 ## Workflow når brugeren beder om et deck
 
-1. Læs denne fil + `../CLAUDE.md` (for det grundlæggende DNA).
-2. Afklar kun det der mangler: **emne, publikum, antal slides, HTML eller PPTX** (gæt fornuftigt hvis ikke nævnt).
-3. Skriv indholdet som struktureret outline (slide-type + indhold pr. slide).
-4. **HTML:** kopiér `template.html`, udfyld med dine slides (samme `<section class="slide ...">`-mønstre).
-5. **PPTX:** skriv en `deck.py` der kalder helpers i `build_pptx.py`, og kør den.
-6. Hold dig til slide-typerne nedenfor. Opfind ikke nye layouts uden grund.
+> **Galleriet er paletten, ikke maleriet.** `template*.html` og `deck*.example.py` viser ÉT eksempel
+> på hver slide-type — de er et bibliotek, IKKE en deck du kopierer. Stilen er fast; *indholdet*
+> bestemmer hvilke og hvor mange slides.
+
+1. Læs denne fil + `CLAUDE.md` (for DNA og VIGTIGSTE REGEL).
+2. Afklar kun det der mangler: **emne, publikum, HTML eller PPTX, tema** (gæt fornuftigt). Spørg IKKE om antal slides — det følger af indholdet.
+3. **Skriv en outline FØRST** ud fra formålet: fortællingen som en liste — for hver slide en type (eller en ny idé) + konkret indhold. Vælg kun det der tjener budskabet; drop resten.
+4. **HTML:** lav en NY `.html`, link `slides.css`/`slides-oes.css` + `slides.js`, og byg DINE slides med slide-type-klasserne (slå dem op i `template*.html` som reference). Kopiér ikke hele galleriet.
+5. **PPTX:** skriv en ny `deck-<emne>.py` der kalder netop de `Deck`-helpers din outline kræver, og kør den.
+6. **Opfind nye layouts** når indholdet kræver det — så længe DNA'et holdes (se nedenfor). Slide-typerne nedenfor er udgangspunktet, ikke et loft.
 
 ---
 
