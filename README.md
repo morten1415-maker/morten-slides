@@ -22,6 +22,7 @@ som identitets-anker. **Én stil**, ét galleri af alle slide-typer.
 | `CLAUDE.md` | Entry point for Claude Code |
 | `assets/` | Officielle ØS-logoer (grøn + hvid, transparente) |
 | `assets/fonts/` | IBM Plex Sans + Mono (TTF) der indlejres i .pptx, med OFL-licens |
+| `verify.py` | Regressionstjek af alle faste mål, font-indlejring og galleri-dækning |
 | `slides-oes.css` | Udfaset shim der importerer `slides.css` — så ældre decks stadig virker |
 
 ## Fonte følger med filen
@@ -39,6 +40,22 @@ Det koster ca. 0,5 MB pr. fil — slå fra med `Deck(embed_fonts=False)`.
 
 - **HTML:** åbn `template.html` i browseren. Pil/mellemrum/klik navigerer. Cmd/Ctrl+P → print til PDF.
 - **PowerPoint:** `pip install python-pptx`, så `python deck.example.py`.
+
+## Tjek at intet er skredet
+
+```bash
+python verify.py
+```
+
+Bygger galleriet og kontrollerer de invarianter der før blev rettet i hånden deck
+efter deck: at konstanterne stadig er referencedeckenes mål, at den genererede
+.pptx følger dem, at IBM Plex faktisk ligger indlejret i filen, at `slides.css`
+og `build_pptx.py` taler om samme mål, at galleriet viser hver slide-type, og at
+der ikke er efterladt kicker-labels over overskrifter. Exit-kode 1 ved fejl.
+
+Kør det efter enhver ændring i `build_pptx.py` eller `slides.css` — der er ingen
+PowerPoint- eller browser-rendering i pipelinen, så målene kan ellers skride
+uden at nogen ser det.
 
 ## De faste mål
 

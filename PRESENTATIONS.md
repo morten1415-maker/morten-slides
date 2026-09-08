@@ -32,7 +32,7 @@ De er kodet ind i `slides.css` og `build_pptx.py`: **brug helperne, så rammer d
 | 2 | **Den grønne linje hører til overskriften** — den skal sidde tæt under den, aldrig svæve mellem overskrift og indhold | PPTX: `ACCENT_Y` = 1,142" (2,90 cm), altid. HTML: `.slide-title::after` — kommer af sig selv. Placér den ALDRIG manuelt |
 | 3 | **Den grønne linje flugter med overskriftens venstrekant** | PPTX: `ACCENT_X` = `MARGIN + 0.1"` (tekstboksens indryk). HTML: automatisk |
 | 4 | **Logoet sidder i højre HJØRNE** med ens luft til højre og bund (0,28" / 27px) — ikke inde på tekstmargin | PPTX: `Deck._footer()`. HTML: `.slide::after` — kommer af sig selv. Tegn aldrig logoet selv |
-| 5 | **Kun ÉN overskrift pr. slide** — den sorte titel. Ingen kicker-eyebrow over den | `kicker=`-argumenter findes stadig i API'et, men ignoreres. Skriv dem ikke |
+| 5 | **Kun ÉN overskrift pr. slide** — den sorte titel. Ingen kicker-eyebrow over den | `kicker=` findes stadig i API'et men ignoreres — undtagen i `image_full`, hvor det er caption-labelen (brug `label=`). Skriv dem ikke |
 
 **Én grøn linje pr. slide, og kun under en `slide-title`.** Sektions-dividers, title-slide, cover
 og closing har ingen grøn linje — de bærer grøn på andre måder (fuldflade, shadow, CTA).
@@ -261,7 +261,8 @@ Den aktuelle sektion må fremhæves (laks nummer).
 Fuldt baggrundsbillede + hvid overlay-boks med hård shadow. **Intet logo.**
 
 ### 11. Full-bleed billede (`.slide--image-full` / `image_full()`)
-Billedet fylder hele sliden; sort caption-stribe nederst med hvid mono-label + titel. **Intet logo.**
+Billedet fylder hele sliden; sort caption-stribe nederst med `label=` i laks-mono
++ captionen i hvid. **Intet logo.**
 
 ### 12. Billede + tekst (`.slide--image-text` / `image_text()`)
 Halv-til-halv: billed-felt på den ene side, bullets på den anden.
@@ -326,6 +327,7 @@ slides.js          — tastaturnavigation + fit-to-viewport-skalering
 template.html      — GALLERI: ét eksempel pr. slide-type (reference, ikke en deck at kopiere)
 build_pptx.py      — Deck-helpers til .pptx — udvid med nye metoder ved behov
 deck.example.py    — GALLERI i PPTX-form -> example.pptx
-assets/            — officielle ØS-logoer (grøn + hvid, transparente PNG)
+verify.py          — regressionstjek: faste mål, font-indlejring, galleri-dækning
+assets/            — officielle ØS-logoer + IBM Plex til indlejring (med OFL-licens)
 slides-oes.css     — udfaset shim der blot importerer slides.css (gamle decks)
 ```

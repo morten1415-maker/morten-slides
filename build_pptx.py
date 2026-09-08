@@ -706,7 +706,13 @@ class Deck:
         _fill(ov, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.55, mr=0.55, mt=0.5, mb=0.5)
         return slide
 
-    def image_full(self, caption=None, kicker=None, image=None):
+    def image_full(self, caption=None, label=None, kicker=None, image=None):
+        """Full-bleed billede med sort caption-stribe. Intet logo (ingen plads).
+
+        label= er mono-labelen FORAN captionen i striben ("FOTO"), i laks.
+        Den er en billed-label, ikke en overskrift — derfor er den ikke fjernet
+        som kicker-eyebrows'ene over titler. kicker= er et gammelt alias."""
+        label = label or kicker
         slide = self._new(CANVAS)
         self._img(slide, 0, 0, SLIDE_W, SLIDE_H, "FULL-BLEED BILLEDE", image)
         if caption:
@@ -715,8 +721,8 @@ class Deck:
             _solid(strip, INK); _no_border(strip); strip.shadow.inherit = False
             cap = self._box(slide, Inches(0.3), Inches(6.32), Inches(8.5), Inches(0.5))
             p = cap.text_frame.paragraphs[0]
-            if kicker:
-                r1 = p.add_run(); r1.text = kicker.upper() + "   "
+            if label:
+                r1 = p.add_run(); r1.text = label.upper() + "   "
                 r1.font.name = FONT_MONO; r1.font.size = Pt(12); r1.font.bold = True
                 r1.font.color.rgb = self.signal; _letter_spacing(r1, 1.0)
             r2 = p.add_run(); r2.text = caption

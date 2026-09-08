@@ -25,6 +25,9 @@ Disse fem er kodet ind i CSS'en og i `build_pptx.py`. **Brug helperne — placé
 3. **Den grønne linje flugter med overskriftens venstrekant.**
 4. **Logoet sidder i højre HJØRNE** med ens luft til højre og bund — ikke inde på tekstmargin.
 5. **Kun ÉN overskrift pr. slide.** Ingen kicker-eyebrow over titlen.
+   `kicker=`-argumenter i `Deck` ignoreres — undtagen i `image_full`, hvor det
+   er mono-labelen i caption-striben (brug `label=` der). Sub-labels i kolonner
+   og billed-captions er ikke overskrifter og bliver.
 
 I HTML kommer 1–4 af sig selv når du bruger `<h2 class="slide-title">` og `.slide`-klasserne.
 I PPTX kommer de af sig selv når du bruger `Deck`-metoderne. Tegn dem ikke manuelt.
@@ -87,6 +90,21 @@ at overse.
 
 Bemærk to forskellige begreber: `statement(attribution=…)` er en citat-afsender
 lige under citatet; `source=` på tal-slides er en datakilde nederst på sliden.
+
+## Kør verify.py efter enhver ændring i build_pptx.py eller slides.css
+
+```bash
+python verify.py
+```
+
+Der er ingen PowerPoint- eller browser-rendering her, så de faste mål kan skride
+uden at nogen ser det. `verify.py` bygger galleriet og tjekker referencemålene,
+geometrien i den genererede fil, font-indlejringen, HTML/PPTX-pariteten,
+galleri-dækningen og at der ikke er efterladte kicker-labels. Exit-kode 1 ved fejl.
+
+Tilføjer du en ny slide-type i `build_pptx.py`, skal den også kaldes i
+`deck.example.py` — ellers fejler galleri-dækningen. Ændrer du bevidst et fast
+mål, skal det ændres BÅDE i `build_pptx.py` og i `REFERENCE_CM` i `verify.py`.
 
 ## Vertikal rytme — ret den centralt, ikke pr. slide
 

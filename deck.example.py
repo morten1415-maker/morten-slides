@@ -73,6 +73,23 @@ deck.cover(
     lead="Overlay-boks med hård shadow oven på fuldt baggrundsbillede.",
 )
 
+deck.image_full(
+    caption="Full-bleed billede med caption i sort stribe.",
+    label="Foto",
+)
+
+deck.image_text(
+    "Billede til venstre, tekst til højre",
+    [
+        "Halv-til-halv layout med skarpt billed-felt.",
+        "image_left=True spejler layoutet.",
+        "Billedet får 2px sort kant som alt andet.",
+    ],
+    image_left=True, accent_index=2,
+)
+
+deck.image_grid(title="Billed-grid", n=6, cols=3)
+
 deck.cards(
     [
         {"title": "Effektivitet", "body": "Færre manuelle trin gennem automatisering."},
@@ -90,6 +107,20 @@ deck.timeline(
         {"when": "Q4", "what": "Evaluering", "desc": "Læring og justering."},
     ],
     title="Året i fire kvartaler", current=2,
+)
+
+deck.comparison(
+    left={"head": "I dag", "items": [
+        (False, "Manuelle indberetninger"),
+        (False, "Spredte systemer"),
+        (True, "Kendt af brugerne"),
+    ]},
+    right={"head": "Efter", "items": [
+        (True, "Automatiske flows"),
+        (True, "Samlet platform"),
+        (True, "Realtids-overblik"),
+    ]},
+    title="Før vs. efter", win="right",
 )
 
 deck.bignum("+18%", sub="Effektivisering år over år — positivt tal bærer ØS-grøn.",
