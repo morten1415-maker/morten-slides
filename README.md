@@ -21,17 +21,19 @@ som identitets-anker. **Én stil**, ét galleri af alle slide-typer.
 | `PRESENTATIONS.md` | Brandguide (læses før et deck genereres) |
 | `CLAUDE.md` | Entry point for Claude Code |
 | `assets/` | Officielle ØS-logoer (grøn + hvid, transparente) |
+| `assets/fonts/` | IBM Plex Sans + Mono (TTF) der indlejres i .pptx, med OFL-licens |
 | `slides-oes.css` | Udfaset shim der importerer `slides.css` — så ældre decks stadig virker |
 
-## Før første brug: installér IBM Plex
+## Fonte følger med filen
 
-PowerPoint refererer fonte ved navn — mangler IBM Plex på maskinen, erstattes den
-lydløst med Calibri, og decket mister mono/sans-forskellen der bærer systemet.
-`build_pptx.py` advarer hvis den mangler.
+PowerPoint refererer fonte ved navn — mangler IBM Plex på maskinen der åbner filen,
+erstattes den lydløst med Calibri, og decket mister mono/sans-forskellen der bærer
+systemet. Derfor **indlejres IBM Plex i hver genereret .pptx**: typografien holder
+på en låst VDI, hos modtagere og på mødelokale-PC'en.
 
-Hent IBM Plex Sans + Mono (gratis, OFL) fra
-[github.com/IBM/plex/releases](https://github.com/IBM/plex/releases), marker
-`.ttf`-filerne → højreklik → *Installer for mig* (kræver ikke admin).
+Fontfilerne ligger i `assets/fonts/` (fra [github.com/IBM/plex](https://github.com/IBM/plex),
+v6.4.0). IBM Plex er OFL-licenseret; `assets/fonts/LICENSE.txt` skal følge med.
+Det koster ca. 0,5 MB pr. fil — slå fra med `Deck(embed_fonts=False)`.
 
 ## Brug
 

@@ -77,10 +77,16 @@ stedet for at udgive slides uden.
 
 ## Fonte
 
-IBM Plex skal være installeret lokalt, ellers erstatter PowerPoint fonten lydløst.
-`build_pptx.py` advarer ved `save()`. Installér fra https://github.com/IBM/plex/releases
-(marker .ttf → højreklik → Installer for mig). Videregiv advarslen til brugeren
-hvis den dukker op — decket ser stadig "rigtigt" ud, så den bliver let overset.
+IBM Plex **indlejres** i hver genereret .pptx (`assets/fonts/`), så typografien
+holder også på maskiner uden fonten installeret. Rør ikke `embed_fonts=`, og slet
+ikke `assets/fonts/LICENSE.txt` — OFL kræver at licensen følger fonten.
+
+Dukker font-advarslen fra `save()` op, er indlejringen slået fra eller filerne
+væk. Videregiv den til brugeren — decket ser stadig "rigtigt" ud, så den er let
+at overse.
+
+Bemærk to forskellige begreber: `statement(attribution=…)` er en citat-afsender
+lige under citatet; `source=` på tal-slides er en datakilde nederst på sliden.
 
 ## Vertikal rytme — ret den centralt, ikke pr. slide
 

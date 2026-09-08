@@ -101,16 +101,24 @@ Fast placering: PPTX `SOURCE_Y` = 6.85" (17,4 cm) · HTML 657px.
 
 ---
 
-## Fonte — IBM Plex skal være installeret
+## Fonte — IBM Plex indlejres i filen
 
-PowerPoint refererer fonte ved **navn**. Er IBM Plex ikke installeret på maskinen,
-erstatter PowerPoint den lydløst (typisk med Calibri): kanter, skygger og farver
-ser stadig rigtige ud, men hele reglen "mono = system, sans = indhold" forsvinder,
-og det er svært at se at noget er galt.
+PowerPoint refererer fonte ved **navn**. Er IBM Plex ikke installeret på den maskine
+der åbner filen, erstatter PowerPoint den lydløst (typisk med Calibri): kanter,
+skygger og farver ser stadig rigtige ud, men hele reglen "mono = system,
+sans = indhold" forsvinder — og det er svært at se at noget er galt.
 
-`build_pptx.py` advarer ved `save()` hvis fonten mangler. Installér IBM Plex Sans
-+ Mono (gratis, OFL) fra https://github.com/IBM/plex/releases — marker `.ttf`-filerne,
-højreklik → *Installer for mig* (kræver ikke admin).
+Derfor **indlejres fonten i hver genereret .pptx**. Typografien rejser med decket:
+den holder på en låst VDI uden lokale fontrettigheder, hos modtagere der aldrig
+har hørt om IBM Plex, og på mødelokale-PC'en.
+
+- Fontfilerne ligger i `assets/fonts/` (`complete/ttf` fra github.com/IBM/plex, v6.4.0).
+- IBM Plex er OFL-licenseret, og OFL tillader indlejring. `assets/fonts/LICENSE.txt`
+  **skal følge med** ved videredistribution — slet den ikke.
+- Det lægger ca. 0,5 MB til hver fil. Slå fra med `Deck(embed_fonts=False)`;
+  så advarer `save()` i stedet, hvis fonten ikke er installeret lokalt.
+- Skal en anden font bruges, er `FONT_SANS`/`FONT_MONO` og `EMBED_FONTS`
+  i toppen af `build_pptx.py` de eneste steder at rette.
 
 HTML-siden hentes fra Google Fonts. Præsenterer du offline, eller er
 fonts.googleapis.com blokeret, falder den tilbage til system-sans.
@@ -229,7 +237,9 @@ To kolonner adskilt af 1px lysegrå linje. Hver kolonne har sin egen mono-label 
 
 ### 5. Statement / quote (`.slide--statement` / `statement()`)
 Én stor sætning eller citat med **laks** 6px venstre-kant. Ingen krøllede anførselstegn-grafik.
-Kilde i mono uppercase nederst.
+Afsender i mono uppercase lige under citatet: `attribution="— Økonomistyrelsen"`.
+Det er *ikke* det samme som `source=` på tal-slides — den er en datakilde nederst
+på sliden. (`source=` virker stadig her som gammelt alias.)
 
 ### 6. Stat / KPI (`.slide--stats` / `stats()`)
 1–3 store tal i bordede kort. Tallet i mono + tabular-nums, label i mono under.

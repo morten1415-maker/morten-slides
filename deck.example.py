@@ -36,7 +36,7 @@ deck.split(
 
 deck.statement(
     "Gode beslutninger bygger på pålidelige tal.",
-    source="— Økonomistyrelsen",
+    attribution="— Økonomistyrelsen",
 )
 
 deck.stats(

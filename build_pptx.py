@@ -7,6 +7,9 @@ sans = indhold), sparsom gul/laks + ØS-grøn som identitets-anker.
 
 Der er ÉN stil. Ingen theme-parameter at vælge imellem.
 
+IBM Plex indlejres i hver genereret fil, så typografien holder også på maskiner
+uden fonten installeret (fx en låst VDI). Slå fra med Deck(embed_fonts=False).
+
 Kræver:  pip install python-pptx
 Brug:    se deck.example.py — opret en Deck, kald .title()/.content()/... , kald .save()
 """
@@ -20,6 +23,175 @@ from pptx.oxml.ns import qn
 import copy
 import os
 import sys
+
+
+_ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+OES_LOGO_GREEN = os.path.join(_ASSETS, "oes-logo-green.png")   # til lyse slides
+OES_LOGO_WHITE = os.path.join(_ASSETS, "oes-logo-white.png")   # til grønne sektioner
+
+# ---------------------------------------------------------------- TOKENS
+INK        = RGBColor(0x00, 0x00, 0x00)
+INK_SOFT   = RGBColor(0x33, 0x33, 0x33)
+MUTED      = RGBColor(0x6B, 0x6B, 0x6B)
+CANVAS     = RGBColor(0xF4, 0xF4, 0xF2)
+PAPER      = RGBColor(0xFF, 0xFF, 0xFF)
+ACCENT     = RGBColor(0xFE, 0xF3, 0xC7)   # gul highlight (uændret)
+
+# ØS-farver (fra brandguiden)
+OES_GREEN  = RGBColor(0x06, 0x6B, 0x43)   # identitetsfarve / brand-anker
+OES_LAKS   = RGBColor(0xED, 0x5E, 0x66)   # ØS' koral — systemets signalfarve
+
+BRAND      = OES_GREEN
+RED        = OES_LAKS                     # danger / vigtigt / fald
+SUCCESS    = OES_GREEN                    # positiv / vækst
+LINE_SOFT  = RGBColor(0xE8, 0xE8, 0xE3)
+WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
+
+FONT_SANS  = "IBM Plex Sans"
+FONT_MONO  = "IBM Plex Mono"
+
+# 16:9
+SLIDE_W = Inches(13.333)
+SLIDE_H = Inches(7.5)
+MARGIN  = Inches(0.66)
+
+# ---------------------------------------------------------------- VERTIKAL RYTME
+# Én fast rytme for ALLE slides med overskrift. Overskriften sidder ØVERST, og
+# den grønne accent-bjælke sidder TÆT under den. Tallene er dem Morten selv
+# rettede sine decks til i hånden. Placér aldrig titel eller accent ad hoc.
+TITLE_TOP    = Inches(0.50)             # tekstboksens top (≈1,27 cm)
+TITLE_H      = Inches(0.80)
+TITLE_W      = SLIDE_W - 2 * MARGIN
+ACCENT_X     = MARGIN + Inches(0.1)     # flugter med titel-tekstens venstrekant
+ACCENT_Y     = Inches(1.142)            # ≈2,90 cm — lige under titlen
+ACCENT_W     = Inches(0.7)
+ACCENT_H     = Pt(6)
+CONTENT_TOP  = Inches(1.70)             # indholdet starter her
+CONTENT_BOT  = Inches(6.60)             # og skal være færdigt her (over logoet)
+CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
+
+# Logo: nederst til HØJRE, i hjørnet med ens luft til højre og bund.
+LOGO_W       = Inches(1.55)
+LOGO_INSET   = Inches(0.28)
+
+# Stort tal (bignum): blokken centreres lodret på sliden.
+BIGNUM_TOP   = Inches(1.70)
+
+# Kilde-/note-linje: nederst til venstre, optisk på linje med logoet.
+SOURCE_Y     = Inches(6.85)
+SOURCE_W     = Inches(10.0)     # stopper før logoet
+
+# Forsidens kasse — faste mål (samme i HTML, se .slide--title .frame i slides.css)
+COVER_TOP    = Inches(1.70)
+COVER_W      = Inches(11.0)
+COVER_H      = Inches(4.0)      # med manchet
+COVER_H_SHORT = Inches(3.6)     # kun overskrift — kassen skal ikke stå halvtom
+
+
+# ---------------------------------------------------------------- FONT-INDLEJRING
+# PowerPoint refererer fonte ved NAVN. Er IBM Plex ikke installeret på maskinen
+# der åbner filen, erstattes den lydløst (typisk med Calibri), og hele reglen
+# "mono = system, sans = indhold" forsvinder — mens kanter, skygger og farver
+# stadig ser rigtige ud, så man ikke opdager det.
+#
+# Løsningen er at indlejre fonten i selve .pptx-filen: så rejser typografien med
+# decket, uanset om modtageren (eller en låst VDI) har fonten installeret.
+# IBM Plex er OFL-licenseret, og OFL tillader indlejring. Licensen ligger i
+# assets/fonts/LICENSE.txt og SKAL følge med ved videredistribution.
+#
+# Filerne er "complete/ttf"-varianterne fra github.com/IBM/plex (tag v6.4.0).
+# De fire vejer ca. 700 KB tilsammen og lægger ca. en halv MB til hver .pptx.
+
+_FONTS_DIR = os.path.join(_ASSETS, "fonts")
+
+# typeface -> {slot: filnavn}. Slots er PowerPoints egne: regular/bold/italic/
+# boldItalic. Vi bruger kun de to første — systemet sætter aldrig kursiv.
+EMBED_FONTS = (
+    (FONT_SANS, 34, (("regular", "IBMPlexSans-Regular.ttf"),
+                     ("bold", "IBMPlexSans-Bold.ttf"))),
+    (FONT_MONO, 49, (("regular", "IBMPlexMono-Regular.ttf"),
+                     ("bold", "IBMPlexMono-Bold.ttf"))),
+)
+
+
+def _panose(blob):
+    """Læs PANOSE-klassifikationen ud af en TTF's OS/2-tabel (20 hex-tegn).
+
+    PowerPoint bruger den til at vælge en fornuftig erstatning hvis indlejringen
+    af en eller anden grund ikke kan bruges. Kan den ikke læses, udelades den."""
+    import struct
+    try:
+        if struct.unpack(">I", blob[:4])[0] != 0x00010000:
+            return None
+        num = struct.unpack(">H", blob[4:6])[0]
+        for i in range(num):
+            off = 12 + i * 16
+            tag = blob[off:off + 4]
+            if tag == b"OS/2":
+                t_off = struct.unpack(">I", blob[off + 8:off + 12])[0]
+                return blob[t_off + 32:t_off + 42].hex().upper()
+    except Exception:
+        pass
+    return None
+
+
+def _embed_fonts(prs):
+    """Indlejr fontfilerne i præsentationen. Returnerer antal indlejrede snit.
+
+    Skriver p:embeddedFontLst i presentation.xml (skal ligge efter p:notesSz
+    ifølge skemaet) og hænger én /ppt/fonts/fontN.fntdata-del på pr. snit.
+    python-pptx kender allerede fntdata-endelsen, så [Content_Types].xml
+    får sin Default-linje af sig selv."""
+    from pptx.opc.constants import CONTENT_TYPE as _CT
+    from pptx.opc.constants import RELATIONSHIP_TYPE as _RT
+    from pptx.opc.package import Part as _Part
+    from pptx.opc.packuri import PackURI as _PackURI
+
+    pres_part = prs.part
+    root = pres_part._element
+    for old in root.findall(qn("p:embeddedFontLst")):    # idempotent
+        root.remove(old)
+
+    lst = root.makeelement(qn("p:embeddedFontLst"), {})
+    n = added = 0
+    for typeface, pitch, slots in EMBED_FONTS:
+        entry = None
+        for slot, filename in slots:
+            path = os.path.join(_FONTS_DIR, filename)
+            if not os.path.exists(path):
+                continue
+            with open(path, "rb") as fh:
+                blob = fh.read()
+            n += 1
+            part = _Part(_PackURI("/ppt/fonts/font%d.fntdata" % n),
+                         _CT.X_FONTDATA, pres_part.package, blob)
+            rId = pres_part.relate_to(part, _RT.FONT)
+            if entry is None:
+                entry = lst.makeelement(qn("p:embeddedFont"), {})
+                fel = entry.makeelement(qn("p:font"), {
+                    "typeface": typeface,
+                    "pitchFamily": str(pitch),
+                    "charset": "0",
+                })
+                pan = _panose(blob)
+                if pan:
+                    fel.set("panose", pan)
+                entry.append(fel)
+                lst.append(entry)
+            sl = entry.makeelement(qn("p:" + slot), {})
+            sl.set(qn("r:id"), rId)
+            entry.append(sl)
+            added += 1
+
+    if not added:
+        return 0
+    notes_sz = root.find(qn("p:notesSz"))
+    if notes_sz is not None:
+        notes_sz.addnext(lst)
+    else:
+        root.append(lst)
+    return added
+
 
 # ---------------------------------------------------------------- FONT-TJEK
 def _installed_font_files():
@@ -80,67 +252,6 @@ def _warn_if_fonts_missing():
         "https://github.com/IBM/plex/releases\n"
         "  Marker .ttf-filerne -> hoejreklik -> Installer for mig (kraever ikke admin).\n\n"
         % " og ".join(missing))
-
-
-_ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-OES_LOGO_GREEN = os.path.join(_ASSETS, "oes-logo-green.png")   # til lyse slides
-OES_LOGO_WHITE = os.path.join(_ASSETS, "oes-logo-white.png")   # til grønne sektioner
-
-# ---------------------------------------------------------------- TOKENS
-INK        = RGBColor(0x00, 0x00, 0x00)
-INK_SOFT   = RGBColor(0x33, 0x33, 0x33)
-MUTED      = RGBColor(0x6B, 0x6B, 0x6B)
-CANVAS     = RGBColor(0xF4, 0xF4, 0xF2)
-PAPER      = RGBColor(0xFF, 0xFF, 0xFF)
-ACCENT     = RGBColor(0xFE, 0xF3, 0xC7)   # gul highlight (uændret)
-
-# ØS-farver (fra brandguiden)
-OES_GREEN  = RGBColor(0x06, 0x6B, 0x43)   # identitetsfarve / brand-anker
-OES_LAKS   = RGBColor(0xED, 0x5E, 0x66)   # ØS' koral — systemets signalfarve
-
-BRAND      = OES_GREEN
-RED        = OES_LAKS                     # danger / vigtigt / fald
-SUCCESS    = OES_GREEN                    # positiv / vækst
-LINE_SOFT  = RGBColor(0xE8, 0xE8, 0xE3)
-WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
-
-FONT_SANS  = "IBM Plex Sans"
-FONT_MONO  = "IBM Plex Mono"
-
-# 16:9
-SLIDE_W = Inches(13.333)
-SLIDE_H = Inches(7.5)
-MARGIN  = Inches(0.66)
-
-# ---------------------------------------------------------------- VERTIKAL RYTME
-# Én fast rytme for ALLE slides med overskrift. Overskriften sidder ØVERST, og
-# den grønne accent-bjælke sidder TÆT under den. Tallene er dem Morten selv
-# rettede sine decks til i hånden. Placér aldrig titel eller accent ad hoc.
-TITLE_TOP    = Inches(0.50)             # tekstboksens top (≈1,27 cm)
-TITLE_H      = Inches(0.80)
-TITLE_W      = SLIDE_W - 2 * MARGIN
-ACCENT_X     = MARGIN + Inches(0.1)     # flugter med titel-tekstens venstrekant
-ACCENT_Y     = Inches(1.142)            # ≈2,90 cm — lige under titlen
-ACCENT_W     = Inches(0.7)
-ACCENT_H     = Pt(6)
-CONTENT_TOP  = Inches(1.70)             # indholdet starter her
-CONTENT_BOT  = Inches(6.60)             # og skal være færdigt her (over logoet)
-CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
-
-# Logo: nederst til HØJRE, i hjørnet med ens luft til højre og bund.
-LOGO_W       = Inches(1.55)
-LOGO_INSET   = Inches(0.28)
-
-# Kilde-/note-linje: nederst til venstre, optisk på linje med logoet.
-SOURCE_Y     = Inches(6.85)
-SOURCE_W     = Inches(10.0)     # stopper før logoet
-
-# Forsidens kasse — faste mål (samme i HTML, se .slide--title .frame i slides.css)
-COVER_TOP    = Inches(1.70)
-COVER_W      = Inches(11.0)
-COVER_H      = Inches(4.0)      # med manchet
-COVER_H_SHORT = Inches(3.6)     # kun overskrift — kassen skal ikke stå halvtom
-
 
 # ---------------------------------------------------------------- LOW-LEVEL HELPERS
 def _solid(shape, color):
@@ -254,7 +365,7 @@ class Deck:
     deck-scripts med ``Deck(theme="oes")`` ikke går i stykker."""
 
     def __init__(self, deck_title="Økonomistyrelsen", footer=None,
-                 logo_path=None, theme=None):
+                 logo_path=None, embed_fonts=True, theme=None):
         self.prs = Presentation()
         self.prs.slide_width = SLIDE_W
         self.prs.slide_height = SLIDE_H
@@ -266,6 +377,7 @@ class Deck:
         self.success = SUCCESS                   # ØS-grøn
         self.brand = BRAND                       # ØS-grøn
         self.cta_bg = BRAND
+        self.embed_fonts = embed_fonts           # læg IBM Plex ind i filen
         self.logo_path = logo_path               # override, valgfri
         self.logo_light = OES_LOGO_GREEN         # grøn logo på lyse slides
         self.logo_dark = OES_LOGO_WHITE          # hvid logo på grøn/sort flade
@@ -432,7 +544,13 @@ class Deck:
         self._footer(slide)
         return slide
 
-    def statement(self, quote, source=None):
+    def statement(self, quote, attribution=None, source=None):
+        """Ét stort citat med laks venstre-kant.
+
+        attribution= er citatets afsender ("— Økonomistyrelsen") og står lige
+        under citatet. Det er IKKE det samme som source= på tal-slides, der er
+        en datakilde nederst på sliden — source= her er kun et gammelt alias."""
+        attribution = attribution or source
         slide = self._new(CANVAS)
         # signal-farvet venstre-kant
         bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, Inches(2.4),
@@ -441,9 +559,9 @@ class Deck:
         q = self._box(slide, MARGIN + Inches(0.4), Inches(2.4), Inches(10.5), Inches(2.6))
         q.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
         _txt(q.text_frame, quote, size=44, bold=True, color=INK, line_pct=1.1)
-        if source:
+        if attribution:
             s = self._box(slide, MARGIN + Inches(0.4), Inches(5.1), Inches(10), Inches(0.5))
-            _txt(s.text_frame, source, font=FONT_MONO, size=15, bold=True,
+            _txt(s.text_frame, attribution, font=FONT_MONO, size=15, bold=True,
                  color=MUTED, mono_label=True)
         self._footer(slide)
         return slide
@@ -742,12 +860,15 @@ class Deck:
         col = INK
         if trend == "up": col = self.success
         if trend == "down": col = self.signal
-        nb = self._box(slide, MARGIN, Inches(2.1), TITLE_W, Inches(2.8))
+        # Blokken var lagt ud med en kicker øverst. Da den forsvandt, blev der
+        # 1 cm for meget luft over tallet — derfor BIGNUM_TOP, ikke 2.1".
+        nb = self._box(slide, MARGIN, BIGNUM_TOP, TITLE_W, Inches(2.8))
         nb.text_frame.word_wrap = False
         nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE   # langt tal krymper til at passe
         _txt(nb.text_frame, value, font=FONT_MONO, size=150, bold=True, color=col, line_pct=0.9)
         if sub:
-            sb = self._box(slide, MARGIN, Inches(5.2), Inches(9), Inches(1.0))
+            sb = self._box(slide, MARGIN, BIGNUM_TOP + Inches(3.1),
+                           Inches(9), Inches(1.0))
             _txt(sb.text_frame, sub, size=24, color=INK_SOFT, line_pct=1.2)
         self._source(slide, source)
         self._footer(slide)
@@ -795,6 +916,9 @@ class Deck:
         return slide
 
     def save(self, path):
-        _warn_if_fonts_missing()
+        """Skriv .pptx. Indlejrer fonten med mindre embed_fonts=False."""
+        embedded = _embed_fonts(self.prs) if self.embed_fonts else 0
+        if not embedded:
+            _warn_if_fonts_missing()   # kun relevant når fonten IKKE rejser med
         self.prs.save(path)
         return path

@@ -17,7 +17,6 @@
   document.body.appendChild(hud);
   const barEl = hud.querySelector('.bar > i');
 
-  function pad(n) { return String(n).padStart(2, '0'); }
 
   function render() {
     slides.forEach((s, i) => s.classList.toggle('is-active', i === index));
