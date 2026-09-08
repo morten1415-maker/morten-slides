@@ -694,6 +694,28 @@ html, body {
    tilbage, så ældre decks med <div class="slide__footer"> stadig ser rigtige ud. */
 .slide__footer { display: none; }
 
+/* ---------- Kilde-/note-linje nederst til venstre ----------
+   "Kilde: Statens Regnskab, 2026" under tal, tabeller og grafer.
+   Absolut placeret som logoet, så den står ens på alle slide-typer og optisk
+   flugter med logoet i modsatte hjørne — uanset hvor højt indholdet er.
+   Mono = system/metadata, derfor uppercase. Virker på enhver .slide. */
+.slide__source {
+  position: absolute;
+  left: 64px;
+  bottom: 38px;
+  max-width: 800px;
+  font-family: var(--font-mono);
+  font-size: 17px;               /* = 13pt */
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.slide--section.is-brand .slide__source,
+.slide--section.is-dark .slide__source { color: rgba(255, 255, 255, 0.7); }
+/* Er der en kilde-linje, skal indhold der fylder hele højden stoppe over den */
+.slide:has(.slide__source) { padding-bottom: 108px; }
+
 /* Closing-CTA: ØS-grøn flade som brand-sign-off */
 .slide--closing .cta {
   background: var(--color-brand);

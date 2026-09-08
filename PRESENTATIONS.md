@@ -82,6 +82,39 @@ den grønne offset-shadow er forsidens brand-signal.
 mono-linjen under kassen (dato / anledning / afsender). I HTML: `<p class="meta">`
 som søskende til `.frame`.
 
+### Kilde-/note-linje
+
+Tal skal kunne efterprøves. `stats`, `table`, `bars` og `bignum` tager derfor
+`source=` — en mono-linje nederst til venstre, optisk på linje med logoet i
+modsatte hjørne:
+
+```python
+deck.stats(cards, title="Året i tal", source="Kilde: Statens Regnskab, 2026")
+```
+
+I HTML: `<p class="slide__source">Kilde: …</p>` som sidste barn i sliden. Klassen
+er absolut placeret og virker på **enhver** slide-type — også som fotokredit.
+Er der en kilde-linje, stopper indholdet automatisk over den.
+
+Fast placering: PPTX `SOURCE_Y` = 6.85" (17,4 cm) · HTML 657px.
+**Sæt et kildeforbehold på hver slide med tal du ikke selv har regnet.**
+
+---
+
+## Fonte — IBM Plex skal være installeret
+
+PowerPoint refererer fonte ved **navn**. Er IBM Plex ikke installeret på maskinen,
+erstatter PowerPoint den lydløst (typisk med Calibri): kanter, skygger og farver
+ser stadig rigtige ud, men hele reglen "mono = system, sans = indhold" forsvinder,
+og det er svært at se at noget er galt.
+
+`build_pptx.py` advarer ved `save()` hvis fonten mangler. Installér IBM Plex Sans
++ Mono (gratis, OFL) fra https://github.com/IBM/plex/releases — marker `.ttf`-filerne,
+højreklik → *Installer for mig* (kræver ikke admin).
+
+HTML-siden hentes fra Google Fonts. Præsenterer du offline, eller er
+fonts.googleapis.com blokeret, falder den tilbage til system-sans.
+
 ---
 
 ## Æstetisk DNA — bærbar brutalisme + ØS-grøn
@@ -201,10 +234,11 @@ Kilde i mono uppercase nederst.
 ### 6. Stat / KPI (`.slide--stats` / `stats()`)
 1–3 store tal i bordede kort. Tallet i mono + tabular-nums, label i mono under.
 **Maks. ét kort fremhævet** (gul flade + laks shadow). Vækst = grøn, fald = laks.
+Tager `source=`.
 
 ### 7. Table (`.slide--table` / `table()`)
 Sort header med hvide mono-uppercase labels, 1px lysegrå rækkelinjer, numeriske kolonner
-højrejusteret + mono + tabular-nums. Fremhævet række = gul.
+højrejusteret + mono + tabular-nums. Fremhævet række = gul. Tager `source=`.
 
 ### 8. Closing (`.slide--closing` / `closing()`)
 "Tak" / kontakt / næste skridt. Spejler title-sliden. CTA-boksen er **grøn** med laks shadow.
@@ -238,11 +272,11 @@ To bordede kolonner med check (**grøn** firkant) / kryds (**laks** firkant) pr.
 "Vinder"-kolonnen må have den ene tilladte laks-shadow.
 
 ### 17. Stort tal (`.slide--bignum` / `bignum()`)
-Ét kæmpe mono-tal i fuld fokus + kort undertekst. Vækst grøn, fald laks.
+Ét kæmpe mono-tal i fuld fokus + kort undertekst. Vækst grøn, fald laks. Tager `source=`.
 
 ### 18. Søjlediagram (`.slide--bars` / `bars()`)
 Vandrette søjler: label + sort fyld-bar + mono-værdi. Maks. én bar fremhævet (laks).
-Brutalist-erstatning for et farvet diagram.
+Brutalist-erstatning for et farvet diagram. Tager `source=`.
 
 ### 19. Testimonial (`.slide--testimonial` / `testimonial()`)
 Portræt-felt (firkant) + stort citat med laks venstre-kant + navn (sans) og rolle (mono).
@@ -264,6 +298,7 @@ Portræt-felt (firkant) + stort citat med laks venstre-kant + navn (sans) og rol
 - ❌ Aldrig runde bullet-prikker — brug små sorte firkanter.
 - ❌ Aldrig mere end én laks-shadow eller én gul flade per slide.
 - ❌ Aldrig side-numre eller footer-tekst — logoet er den eneste faste markør.
+- ❌ Aldrig tal uden kilde. Sæt `source=` når tallene ikke er dine egne.
 - ❌ Aldrig proportionale tal i tal-kontekst — altid tabular-nums + mono.
 
 ## Når du er i tvivl

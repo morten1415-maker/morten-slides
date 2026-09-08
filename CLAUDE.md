@@ -68,6 +68,20 @@ hvilke og hvor mange slides.
    Kræver `pip install python-pptx`.
 6. Brugeren skal **aldrig** gentage designreglerne — de er kodet ind i guiden, tokens og helpers.
 
+## Kilde på tal
+
+`stats`, `table`, `bars` og `bignum` tager `source="Kilde: …"` — en mono-linje
+nederst til venstre. I HTML: `<p class="slide__source">`. **Sæt den når tallene
+ikke er brugerens egne.** Har du kun tal uden kilde, så spørg efter kilden i
+stedet for at udgive slides uden.
+
+## Fonte
+
+IBM Plex skal være installeret lokalt, ellers erstatter PowerPoint fonten lydløst.
+`build_pptx.py` advarer ved `save()`. Installér fra https://github.com/IBM/plex/releases
+(marker .ttf → højreklik → Installer for mig). Videregiv advarslen til brugeren
+hvis den dukker op — decket ser stadig "rigtigt" ud, så den bliver let overset.
+
 ## Vertikal rytme — ret den centralt, ikke pr. slide
 
 Målene ligger som konstanter i toppen af `build_pptx.py` (`TITLE_TOP`, `ACCENT_Y`, `ACCENT_X`,

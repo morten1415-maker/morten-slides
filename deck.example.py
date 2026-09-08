@@ -45,7 +45,7 @@ deck.stats(
         {"num": "+18%", "label": "Effektivisering", "trend": "up"},
         {"num": "99,8", "label": "Oppetid %"},
     ],
-    title="Året i tal",
+    title="Året i tal", source="Kilde: Statens Regnskab, 2026",
     primary_index=1,
 )
 
@@ -56,7 +56,7 @@ deck.table(
         ["Udvikling", "ØS", "118", "+5"],
         ["Support", "ØS", "64", "0"],
     ],
-    title="Budgetoversigt",
+    title="Budgetoversigt", source="Kilde: Statens Regnskab, 2026",
     numeric_cols=(2, 3),
     highlight_row=1,
 )
@@ -93,7 +93,7 @@ deck.timeline(
 )
 
 deck.bignum("+18%", sub="Effektivisering år over år — positivt tal bærer ØS-grøn.",
-            trend="up")
+            trend="up", source="Kilde: Statens Regnskab, 2026")
 
 deck.bars(
     [
@@ -102,6 +102,7 @@ deck.bars(
         {"label": "Support", "pct": 27, "value": "64"},
     ],
     title="Budget pr. område", accent_index=1,
+    source="Kilde: Statens Regnskab, 2026",
 )
 
 deck.testimonial(

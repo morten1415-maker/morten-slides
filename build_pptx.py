@@ -19,6 +19,68 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 import copy
 import os
+import sys
+
+# ---------------------------------------------------------------- FONT-TJEK
+def _installed_font_files():
+    """Filnavne på installerede fonte — Windows, macOS og Linux."""
+    dirs = []
+    home = os.path.expanduser("~")
+    win = os.environ.get("WINDIR", r"C:\Windows")
+    local = os.environ.get("LOCALAPPDATA", "")
+    dirs += [os.path.join(win, "Fonts")]
+    if local:
+        dirs.append(os.path.join(local, "Microsoft", "Windows", "Fonts"))
+    dirs += ["/Library/Fonts", "/System/Library/Fonts",
+             os.path.join(home, "Library", "Fonts"),
+             "/usr/share/fonts", "/usr/local/share/fonts",
+             os.path.join(home, ".local", "share", "fonts"),
+             os.path.join(home, ".fonts")]
+    names = []
+    for d in dirs:
+        try:
+            for root, _dirs, files in os.walk(d):
+                names.extend(f.lower() for f in files)
+        except Exception:
+            continue
+    return names
+
+
+_FONT_WARNED = False
+
+
+def _warn_if_fonts_missing():
+    """Advar hvis IBM Plex ikke er installeret.
+
+    PowerPoint refererer fonte ved NAVN. Mangler IBM Plex på maskinen,
+    erstatter PowerPoint den lydløst (typisk med Calibri) — kanter, skygger og
+    farver ser stadig rigtige ud, så man opdager det ikke. Men hele reglen
+    "mono = system, sans = indhold" forsvinder. Derfor denne advarsel."""
+    global _FONT_WARNED
+    if _FONT_WARNED:
+        return
+    _FONT_WARNED = True
+    try:
+        files = _installed_font_files()
+    except Exception:
+        return
+    if not files:
+        return                      # kunne ikke læse font-mapperne — ti stille
+    flat = [f.replace("-", "").replace("_", "").replace(" ", "") for f in files]
+    missing = [name for name, key in (("IBM Plex Sans", "ibmplexsans"),
+                                      ("IBM Plex Mono", "ibmplexmono"))
+               if not any(key in f for f in flat)]
+    if not missing:
+        return
+    sys.stderr.write(
+        "\n  ADVARSEL: %s er ikke installeret paa denne maskine.\n"
+        "  PowerPoint erstatter fonten lydloest (typisk Calibri), og decket\n"
+        "  mister mono/sans-forskellen der baerer designsystemet.\n"
+        "  Hent IBM Plex Sans + Mono (gratis, OFL): "
+        "https://github.com/IBM/plex/releases\n"
+        "  Marker .ttf-filerne -> hoejreklik -> Installer for mig (kraever ikke admin).\n\n"
+        % " og ".join(missing))
+
 
 _ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 OES_LOGO_GREEN = os.path.join(_ASSETS, "oes-logo-green.png")   # til lyse slides
@@ -68,6 +130,10 @@ CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
 # Logo: nederst til HØJRE, i hjørnet med ens luft til højre og bund.
 LOGO_W       = Inches(1.55)
 LOGO_INSET   = Inches(0.28)
+
+# Kilde-/note-linje: nederst til venstre, optisk på linje med logoet.
+SOURCE_Y     = Inches(6.85)
+SOURCE_W     = Inches(10.0)     # stopper før logoet
 
 # Forsidens kasse — faste mål (samme i HTML, se .slide--title .frame i slides.css)
 COVER_TOP    = Inches(1.70)
@@ -263,6 +329,18 @@ class Deck:
                                      ACCENT_X, ACCENT_Y, ACCENT_W, ACCENT_H)
         _solid(bar, self.brand); _no_border(bar); bar.shadow.inherit = False
 
+    def _source(self, slide, text):
+        """Kilde-/note-linje nederst til venstre ("Kilde: Statens Regnskab, 2026").
+
+        Fast SOURCE_Y, så den står ens på alle slide-typer og optisk flugter
+        med logoet i modsatte hjørne. Mono = system/metadata, derfor uppercase."""
+        if not text:
+            return
+        tb = self._box(slide, MARGIN, SOURCE_Y, SOURCE_W, Inches(0.35))
+        _txt(tb.text_frame, text, font=FONT_MONO, size=13, bold=True,
+             color=MUTED, mono_label=True)
+        return tb
+
     def _title(self, slide, title, size=42):
         """Slide-overskrift øverst + den grønne accent lige under."""
         t = self._box(slide, MARGIN, TITLE_TOP, TITLE_W, TITLE_H)
@@ -370,9 +448,11 @@ class Deck:
         self._footer(slide)
         return slide
 
-    def stats(self, cards, title=None, kicker=None, primary_index=None):
+    def stats(self, cards, title=None, kicker=None, primary_index=None,
+              source=None):
         """cards: liste af dict {'num': str, 'label': str, 'trend': 'up'|'down'|None}.
-        primary_index: index på det fremhævede kort (gul + rød shadow)."""
+        primary_index: index på det fremhævede kort (gul flade + laks shadow).
+        source: kilde-/note-linje nederst til venstre."""
         slide = self._new(CANVAS)
         if title:
             self._title(slide, title)
@@ -406,12 +486,14 @@ class Deck:
                            Emu(int(cw - Inches(0.6))), Inches(0.7))
             _txt(lb.text_frame, c["label"], font=FONT_MONO, size=13, bold=True,
                  color=MUTED, mono_label=True, line_pct=1.1)
+        self._source(slide, source)
         self._footer(slide)
         return slide
 
     def table(self, headers, rows, title=None, kicker=None,
-              numeric_cols=(), highlight_row=None):
-        """headers: list[str]. rows: list[list[str]]. numeric_cols: indices højrejusteret+mono."""
+              numeric_cols=(), highlight_row=None, source=None):
+        """headers: list[str]. rows: list[list[str]]. numeric_cols: indices højrejusteret+mono.
+        source: kilde-/note-linje nederst til venstre."""
         slide = self._new(CANVAS)
         if title:
             self._title(slide, title)
@@ -444,6 +526,7 @@ class Deck:
                      font=FONT_MONO if is_num else FONT_SANS,
                      size=16, color=INK_SOFT,
                      align=PP_ALIGN.RIGHT if is_num else PP_ALIGN.LEFT)
+        self._source(slide, source)
         self._footer(slide)
         return slide
 
@@ -653,7 +736,8 @@ class Deck:
         self._footer(slide)
         return slide
 
-    def bignum(self, value, sub=None, kicker=None, trend=None):
+    def bignum(self, value, sub=None, kicker=None, trend=None, source=None):
+        """Ét stort tal i fuld fokus. source: kilde-/note-linje nederst til venstre."""
         slide = self._new(CANVAS)
         col = INK
         if trend == "up": col = self.success
@@ -665,11 +749,13 @@ class Deck:
         if sub:
             sb = self._box(slide, MARGIN, Inches(5.2), Inches(9), Inches(1.0))
             _txt(sb.text_frame, sub, size=24, color=INK_SOFT, line_pct=1.2)
+        self._source(slide, source)
         self._footer(slide)
         return slide
 
-    def bars(self, rows, title=None, kicker=None, accent_index=None):
-        """rows: liste af dict {'label': str, 'pct': 0-100, 'value': str}."""
+    def bars(self, rows, title=None, kicker=None, accent_index=None, source=None):
+        """rows: liste af dict {'label': str, 'pct': 0-100, 'value': str}.
+        source: kilde-/note-linje nederst til venstre."""
         slide = self._new(CANVAS)
         self._head(slide, kicker, title)
         top = CONTENT_TOP; rh = Inches(0.55); gap = Inches(0.35)
@@ -690,6 +776,7 @@ class Deck:
             vb = self._box(slide, Emu(int(track_x + track_w + Inches(0.15))), y + Inches(0.08), val_w, Inches(0.4))
             _txt(vb.text_frame, r["value"], font=FONT_MONO, size=17, bold=True, color=INK,
                  align=PP_ALIGN.RIGHT)
+        self._source(slide, source)
         self._footer(slide)
         return slide
 
@@ -708,5 +795,6 @@ class Deck:
         return slide
 
     def save(self, path):
+        _warn_if_fonts_missing()
         self.prs.save(path)
         return path

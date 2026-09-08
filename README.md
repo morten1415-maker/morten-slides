@@ -23,6 +23,16 @@ som identitets-anker. **Én stil**, ét galleri af alle slide-typer.
 | `assets/` | Officielle ØS-logoer (grøn + hvid, transparente) |
 | `slides-oes.css` | Udfaset shim der importerer `slides.css` — så ældre decks stadig virker |
 
+## Før første brug: installér IBM Plex
+
+PowerPoint refererer fonte ved navn — mangler IBM Plex på maskinen, erstattes den
+lydløst med Calibri, og decket mister mono/sans-forskellen der bærer systemet.
+`build_pptx.py` advarer hvis den mangler.
+
+Hent IBM Plex Sans + Mono (gratis, OFL) fra
+[github.com/IBM/plex/releases](https://github.com/IBM/plex/releases), marker
+`.ttf`-filerne → højreklik → *Installer for mig* (kræver ikke admin).
+
 ## Brug
 
 - **HTML:** åbn `template.html` i browseren. Pil/mellemrum/klik navigerer. Cmd/Ctrl+P → print til PDF.
@@ -39,5 +49,6 @@ Overskrift, den grønne accent-linje og logoet placeres automatisk og må ikke s
 | Indhold | 1.70" → 6.60" | 64px → 642px |
 | Logo, hjørne-luft | 0.28" | 27px |
 | Forsidens kasse | 11.0" × 4.0" @ 1.70" | 1056 × 384px @ 163px |
+| Kilde-linje | 6.85" | 657px |
 
 Konstanterne står i toppen af `build_pptx.py` og i `:root` i `slides.css`. Ret dem der.
