@@ -69,6 +69,12 @@ CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
 LOGO_W       = Inches(1.55)
 LOGO_INSET   = Inches(0.28)
 
+# Forsidens kasse — faste mål (samme i HTML, se .slide--title .frame i slides.css)
+COVER_TOP    = Inches(1.70)
+COVER_W      = Inches(11.0)
+COVER_H      = Inches(4.0)      # med manchet
+COVER_H_SHORT = Inches(3.6)     # kun overskrift — kassen skal ikke stå halvtom
+
 
 # ---------------------------------------------------------------- LOW-LEVEL HELPERS
 def _solid(shape, color):
@@ -266,12 +272,19 @@ class Deck:
 
     # ============================================================ SLIDE-TYPER
 
-    def title(self, title, lead=None, kicker=None):
-        """Åbnings-slide. kicker= ignoreres (kun ÉN overskrift pr. slide)."""
+    def title(self, title, lead=None, kicker=None, meta=None):
+        """Åbnings-slide: hvid kasse med grøn offset-shadow.
+
+        meta=  valgfri mono-linje UNDER kassen (dato / anledning / afsender).
+        kicker= ignoreres (kun ÉN overskrift pr. slide).
+
+        Kassen er 11.0" bred og 4.0" høj — 3.6" når der ikke er nogen manchet,
+        så den ikke står halvtom. Målene er referencedeckenes."""
         slide = self._new(CANVAS)
         # hvidt frame med stor shadow — teksten flyder inde i rammen
-        fr = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, Inches(1.7),
-                                    Inches(11.0), Inches(4.0))
+        box_h = COVER_H if lead else COVER_H_SHORT
+        fr = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, COVER_TOP,
+                                    COVER_W, box_h)
         _solid(fr, PAPER)
         _border(fr, INK, 3.0)
         fr.shadow.inherit = False
@@ -281,6 +294,11 @@ class Deck:
         if lead:
             blocks.append(dict(text=lead, size=22, color=INK_SOFT, line=1.25))
         _fill(fr, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.6, mr=0.6, mt=0.55, mb=0.55)
+        if meta:
+            mb_ = self._box(slide, MARGIN, COVER_TOP + box_h + Inches(0.38),
+                            Inches(8), Inches(0.4))
+            _txt(mb_.text_frame, meta, font=FONT_MONO, size=13, bold=True,
+                 color=MUTED, mono_label=True)
         self._footer(slide)
         return slide
 

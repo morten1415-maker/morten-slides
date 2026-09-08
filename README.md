@@ -38,5 +38,6 @@ Overskrift, den grønne accent-linje og logoet placeres automatisk og må ikke s
 | Grøn accent, top | 1.142" | tæt under titlen |
 | Indhold | 1.70" → 6.60" | 64px → 642px |
 | Logo, hjørne-luft | 0.28" | 27px |
+| Forsidens kasse | 11.0" × 4.0" @ 1.70" | 1056 × 384px @ 163px |
 
 Konstanterne står i toppen af `build_pptx.py` og i `:root` i `slides.css`. Ret dem der.

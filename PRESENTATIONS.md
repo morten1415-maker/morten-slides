@@ -57,6 +57,31 @@ sikker margin              0.66"                    64px
 Konstanterne står i toppen af `build_pptx.py` (`TITLE_TOP`, `ACCENT_Y`, `CONTENT_TOP`,
 `CONTENT_BOT`, `LOGO_INSET` …) og i `:root` i `slides.css`. **Ret dem der — ikke pr. slide.**
 
+### Forsidens kasse (faste mål)
+
+Forsidens hvide kasse må **ikke** hugge teksten — den skal være den samme brede,
+rolige flade hver gang. Målene er identiske i HTML og PPTX:
+
+```
+                       PPTX (13.333 x 7.5")     HTML (1280 x 720 px)
+kasse, venstre             1.68 cm / 0.66"          64px
+kasse, top                 4.32 cm / 1.70"          163px
+kasse, bredde              27.94 cm / 11.0"         1056px
+kasse, højde (m. manchet)  10.16 cm / 4.0"          384px
+kasse, højde (kun titel)    9.14 cm / 3.6"          346px
+indre luft                 0.6" vandret / 0.55"     58px / 53px
+overskrift                 58pt                     77px
+manchet                    22pt                     29px
+grøn offset-shadow         8pt ned-højre            8px 8px
+meta-linje under kassen    0.38" under              36px under
+```
+
+Teksten er lodret centreret i kassen. Kassen har ingen grøn accent-linje —
+den grønne offset-shadow er forsidens brand-signal.
+`title(..., meta="Økonomistyrelsen · Ledelsesoverblik · August 2026")` sætter
+mono-linjen under kassen (dato / anledning / afsender). I HTML: `<p class="meta">`
+som søskende til `.frame`.
+
 ---
 
 ## Æstetisk DNA — bærbar brutalisme + ØS-grøn
@@ -153,8 +178,9 @@ HTML-klasse + PPTX-helper i parentes. Alle typer med overskrift får automatisk
 titel øverst + grøn accent + logo.
 
 ### 1. Title (`.slide--title` / `title()`)
-Åbnings-slide: hvidt frame med **grøn** offset-shadow, stor `slide-display`-titel, evt. manchet.
-Lodret centreret. Ingen grøn accent-linje (rammens shadow bærer grøn).
+Åbnings-slide: hvid kasse med faste mål (se "Forsidens kasse" ovenfor) og **grøn**
+offset-shadow, `slide-display`-titel, evt. manchet, evt. `meta=`-linje under kassen.
+Teksten er centreret i kassen. Ingen grøn accent-linje — shadowen bærer grøn.
 
 ### 2. Section divider (`.slide--section.is-brand` / `section()`)
 Nyt kapitel: **ØS-grøn fuldflade**, hvid tekst, hvidt logo, stort mono-sektionsnummer.

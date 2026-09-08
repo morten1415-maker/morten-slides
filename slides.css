@@ -151,23 +151,54 @@ html, body {
 /* Side-nummer fjernet */
 .slide__footer [data-slide-no] { display: none; }
 
-/* ===== 1. Title ===== */
-.slide--title { justify-content: center; }
+/* ===== 1. Title =====
+   Kassen har FASTE mål, ikke content-hugging: den skal være den samme brede,
+   rolige flade hver gang — 1056 x 346px svarer 1:1 til PPTX' 11.0" x 3.6"
+   inden for det samme 16:9-canvas. Uden dem krympede kassen til ~halv bredde
+   i HTML og lignede ikke PPTX-forsiden. Teksten centreres lodret i kassen
+   (samme som anchor=ctr i PPTX), og kassen vokser hvis manchetten er lang. */
+.slide--title { justify-content: flex-start; }
 .slide--title .frame {
+  margin-top: 96px;              /* kassens top = 1.70" af 7.5", som i PPTX */
   border: 3px solid var(--color-ink);
   box-shadow: var(--shadow-lg);
   background: var(--bg-paper);
-  padding: 56px;
+  box-sizing: border-box;
+  width: 1056px;                 /* = 11.0" af 13.333" */
+  min-height: 346px;             /* = 3.6" af 7.5" — kun overskrift */
+  padding: 53px 58px;            /* = PPTX' tIns/bIns 0.55" og lIns/rIns 0.6" */
   align-self: flex-start;
-  max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
+/* Med manchet er kassen 4.0" høj, som i PPTX; uden er den 3.6" */
+.slide--title .frame:has(.lead) { min-height: 384px; }
+
 .slide--title .slide-display {
-  font-size: 92px;
+  font-size: 77px;               /* = 58pt */
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.04;
+  line-height: 1.02;
 }
-.slide--title .lead { margin-top: 32px; font-size: 26px; }
+.slide--title .lead {
+  margin-top: 27px;              /* = PPTX' space_after 20pt */
+  font-size: 29px;               /* = 22pt */
+  line-height: 1.25;
+  max-width: none;               /* manchetten må bruge kassens fulde bredde */
+}
+
+/* Valgfri meta-linje UNDER kassen: dato / anledning / afsender.
+   Mono, uppercase, muted — som i referencedeckene. */
+.slide--title .meta {
+  margin-top: 36px;              /* = 0.38" under kassen */
+  font-family: var(--font-mono);
+  font-size: 17px;               /* = 13pt */
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
 
 /* ===== 2. Section divider ===== */
 .slide--section { justify-content: center; align-items: flex-start; gap: 16px; }

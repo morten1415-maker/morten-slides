@@ -10,8 +10,9 @@ from build_pptx import Deck
 deck = Deck(deck_title="Økonomistyrelsen · Eksempel")
 
 deck.title(
-    "Årsrapport 2026.",
+    "Årsrapport 2026",
     lead="Et slidedeck i Økonomistyrelsens identitet — bygget på den brutalistiske skabelon med ØS-grøn som anker.",
+    meta="Økonomistyrelsen · Ledelsesoverblik · August 2026",
 )
 
 deck.section("Årets resultater", num="01")   # bruger automatisk brand-grøn flade
