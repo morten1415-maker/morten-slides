@@ -1,9 +1,11 @@
 """
-Morten DS — PowerPoint-generator
-=================================
-On-brand .pptx der følger præsentations-brandguiden (PRESENTATIONS.md):
-bærbar brutalisme på 16:9 — sorte kanter, hårde offset-shadows (ingen blur),
-IBM Plex (mono = system, sans = indhold), sparsom rød/gul.
+Økonomistyrelsen — PowerPoint-generator
+=======================================
+On-brand .pptx der følger PRESENTATIONS.md: bærbar brutalisme på 16:9 —
+sorte kanter, hårde offset-shadows (ingen blur), IBM Plex (mono = system,
+sans = indhold), sparsom gul/laks + ØS-grøn som identitets-anker.
+
+Der er ÉN stil. Ingen theme-parameter at vælge imellem.
 
 Kræver:  pip install python-pptx
 Brug:    se deck.example.py — opret en Deck, kald .title()/.content()/... , kald .save()
@@ -28,9 +30,15 @@ INK_SOFT   = RGBColor(0x33, 0x33, 0x33)
 MUTED      = RGBColor(0x6B, 0x6B, 0x6B)
 CANVAS     = RGBColor(0xF4, 0xF4, 0xF2)
 PAPER      = RGBColor(0xFF, 0xFF, 0xFF)
-ACCENT     = RGBColor(0xFE, 0xF3, 0xC7)   # gul
-RED        = RGBColor(0xFF, 0x57, 0x57)
-SUCCESS    = RGBColor(0x16, 0xA3, 0x4A)
+ACCENT     = RGBColor(0xFE, 0xF3, 0xC7)   # gul highlight (uændret)
+
+# ØS-farver (fra brandguiden)
+OES_GREEN  = RGBColor(0x06, 0x6B, 0x43)   # identitetsfarve / brand-anker
+OES_LAKS   = RGBColor(0xED, 0x5E, 0x66)   # ØS' koral — systemets signalfarve
+
+BRAND      = OES_GREEN
+RED        = OES_LAKS                     # danger / vigtigt / fald
+SUCCESS    = OES_GREEN                    # positiv / vækst
 LINE_SOFT  = RGBColor(0xE8, 0xE8, 0xE3)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
 
@@ -41,6 +49,25 @@ FONT_MONO  = "IBM Plex Mono"
 SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
 MARGIN  = Inches(0.66)
+
+# ---------------------------------------------------------------- VERTIKAL RYTME
+# Én fast rytme for ALLE slides med overskrift. Overskriften sidder ØVERST, og
+# den grønne accent-bjælke sidder TÆT under den. Tallene er dem Morten selv
+# rettede sine decks til i hånden. Placér aldrig titel eller accent ad hoc.
+TITLE_TOP    = Inches(0.50)             # tekstboksens top (≈1,27 cm)
+TITLE_H      = Inches(0.80)
+TITLE_W      = SLIDE_W - 2 * MARGIN
+ACCENT_X     = MARGIN + Inches(0.1)     # flugter med titel-tekstens venstrekant
+ACCENT_Y     = Inches(1.142)            # ≈2,90 cm — lige under titlen
+ACCENT_W     = Inches(0.7)
+ACCENT_H     = Pt(6)
+CONTENT_TOP  = Inches(1.70)             # indholdet starter her
+CONTENT_BOT  = Inches(6.60)             # og skal være færdigt her (over logoet)
+CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
+
+# Logo: nederst til HØJRE, i hjørnet med ens luft til højre og bund.
+LOGO_W       = Inches(1.55)
+LOGO_INSET   = Inches(0.28)
 
 
 # ---------------------------------------------------------------- LOW-LEVEL HELPERS
@@ -147,40 +174,15 @@ def _fill(shape, blocks, anchor=MSO_ANCHOR.TOP,
             _letter_spacing(run, b.get("spc", 1.2))
 
 
-# ---------------------------------------------------------------- TEMAER
-# Økonomistyrelsen-farver (fra brandguiden)
-OES_GREEN = RGBColor(0x06, 0x6B, 0x43)   # identitetsfarve
-OES_LAKS  = RGBColor(0xED, 0x5E, 0x66)   # supplerende koral (≈ vores signal-rød)
-
-# Et tema styrer kun de farver der adskiller varianterne. Strukturen
-# (sorte kanter, hårde shadows, canvas-bg, gul highlight) er ens.
-THEMES = {
-    # Primær præsentation stil
-    "default": dict(
-        signal=RED, success=SUCCESS, brand=INK,
-        kicker_color=MUTED, cta_bg=INK,
-        section_default="dark", brand_bar=False, logo_text=None,
-    ),
-    # Økonomistyrelsen — primær stil + grøn anker + officielt logo.
-    # Grøn på: titel-accent, section-dividers, logo, titel-topkant, positive tal, CTA.
-    # Kickers er muted grå (som primær) -> kun ÉN overskrift pr. slide.
-    # Logo nederst til højre på alle slides med plads.
-    "oes": dict(
-        signal=OES_LAKS, success=OES_GREEN, brand=OES_GREEN,
-        kicker_color=MUTED, cta_bg=OES_GREEN,
-        section_default="brand", brand_bar=False, logo_text="Økonomistyrelsen",
-        logo_light=OES_LOGO_GREEN, logo_dark=OES_LOGO_WHITE,
-        show_eyebrow=False,   # kun ÉN overskrift: den sorte titel (ingen kicker-label)
-    ),
-}
-THEMES["primær"] = THEMES["default"]
-THEMES["primary"] = THEMES["default"]
-
-
 # ---------------------------------------------------------------- DECK
 class Deck:
-    def __init__(self, deck_title="Morten DS", footer=None, theme="default",
-                 logo_path=None):
+    """Ét ØS-deck. Der er ingen stilarter at vælge imellem.
+
+    ``theme=`` tages stadig imod, men ignoreres — den findes kun så gamle
+    deck-scripts med ``Deck(theme="oes")`` ikke går i stykker."""
+
+    def __init__(self, deck_title="Økonomistyrelsen", footer=None,
+                 logo_path=None, theme=None):
         self.prs = Presentation()
         self.prs.slide_width = SLIDE_W
         self.prs.slide_height = SLIDE_H
@@ -188,21 +190,13 @@ class Deck:
         self.deck_title = deck_title
         self.footer = footer or deck_title
         self._n = 0
-        # Tema-farver som instans-attributter
-        t = THEMES[theme] if isinstance(theme, str) else theme
-        self.signal = t["signal"]
-        self.success = t["success"]
-        self.brand = t["brand"]
-        self.kicker_color = t["kicker_color"]
-        self.cta_bg = t["cta_bg"]
-        self.section_default = t["section_default"]
-        self.brand_bar = t["brand_bar"]
-        self.logo_text = t.get("logo_text")
-        self.logo_path = logo_path                # ægte logo-fil (override, valgfri)
-        self.logo_light = t.get("logo_light")     # logo til lyse baggrunde
-        self.logo_dark = t.get("logo_dark")       # logo til mørke/grønne baggrunde
-        self.brand_accent = self.brand != INK     # bruger temaet en brand-farve?
-        self.show_eyebrow = t.get("show_eyebrow", True)   # kicker-label over titlen?
+        self.signal = RED                        # Laks
+        self.success = SUCCESS                   # ØS-grøn
+        self.brand = BRAND                       # ØS-grøn
+        self.cta_bg = BRAND
+        self.logo_path = logo_path               # override, valgfri
+        self.logo_light = OES_LOGO_GREEN         # grøn logo på lyse slides
+        self.logo_dark = OES_LOGO_WHITE          # hvid logo på grøn/sort flade
 
     # --- intern: nyt blankt slide med valgfri baggrund ---
     def _new(self, bg=CANVAS):
@@ -212,12 +206,6 @@ class Deck:
         _solid(rect, bg)
         _no_border(rect)
         rect.shadow.inherit = False
-        # Brand-bar: tynd ØS-grøn stribe i venstre kant (kun tema med brand_bar)
-        if self.brand_bar:
-            bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(0.14), SLIDE_H)
-            _solid(bar, self.brand)
-            _no_border(bar)
-            bar.shadow.inherit = False
         # 3px sort yderramme
         frame = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_W, SLIDE_H)
         _no_fill(frame)
@@ -241,46 +229,45 @@ class Deck:
         return None
 
     def _footer(self, slide, dark=False):
-        col = RGBColor(0xBD, 0xBD, 0xBD) if dark else MUTED
-        y = SLIDE_H - Inches(0.62)
-        logo = self._logo_path_for(dark)
-        if logo:
-            # ØS: officielt logo nederst til højre (intet side-nummer)
-            lw = Inches(1.55)                       # bredde; højde efter aspect
-            from PIL import Image as _PILImage
-            try:
-                iw, ih = _PILImage.open(logo).size
-                lh = Emu(int(lw * ih / iw))
-            except Exception:
-                lh = Inches(0.42)
-            slide.shapes.add_picture(logo, SLIDE_W - MARGIN - lw,
-                                     y + Inches(0.04), width=lw, height=lh)
-        else:
-            # deck-titel nederst til venstre (intet side-nummer)
-            left = self._box(slide, MARGIN, y, Inches(8), Inches(0.4))
-            _txt(left.text_frame, self.footer, font=FONT_MONO, size=11, color=col, mono_label=True)
+        """Officielt ØS-logo nederst til HØJRE, i hjørnet.
 
-    def _accent(self, slide, y=Inches(2.02), x=None):
-        """Kort grøn accent-bjælke under en slide-titel (kun brand-tema).
-        x flugter med titel-tekstens venstrekant = MARGIN + tekstboksens 0.1" indryk."""
-        if not self.brand_accent:
+        Ens luft til højre og bund (LOGO_INSET). Intet side-nummer og ingen
+        deck-titel — logoet bærer navnet."""
+        logo = self._logo_path_for(dark)
+        if not logo:
             return
+        from PIL import Image as _PILImage
+        try:
+            iw, ih = _PILImage.open(logo).size
+            lh = Emu(int(LOGO_W * ih / iw))
+        except Exception:
+            lh = Inches(0.42)
+        slide.shapes.add_picture(logo,
+                                 SLIDE_W - LOGO_INSET - LOGO_W,
+                                 SLIDE_H - LOGO_INSET - lh,
+                                 width=LOGO_W, height=lh)
+
+    def _accent(self, slide):
+        """Den grønne accent-bjælke — hører til overskriften.
+
+        Fast ACCENT_Y lige under titlen, flugter med titel-tekstens
+        venstrekant. Den må ALDRIG rykkes længere ned, hvor den kommer til at
+        svæve mellem overskrift og indhold."""
         bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
-                                     x if x is not None else MARGIN + Inches(0.1), y,
-                                     Inches(0.7), Pt(6))
+                                     ACCENT_X, ACCENT_Y, ACCENT_W, ACCENT_H)
         _solid(bar, self.brand); _no_border(bar); bar.shadow.inherit = False
 
-    def _kicker(self, slide, text, top, color=None):
-        if not self.show_eyebrow:
-            return None                      # temaet skjuler kicker-labels
-        tb = self._box(slide, MARGIN, top, Inches(11), Inches(0.4))
-        _txt(tb.text_frame, text, font=FONT_MONO, size=14, bold=True,
-             color=color or self.kicker_color, mono_label=True)
-        return tb
+    def _title(self, slide, title, size=42):
+        """Slide-overskrift øverst + den grønne accent lige under."""
+        t = self._box(slide, MARGIN, TITLE_TOP, TITLE_W, TITLE_H)
+        _txt(t.text_frame, title, size=size, bold=True, color=INK, line_pct=1.05)
+        self._accent(slide)
+        return t
 
     # ============================================================ SLIDE-TYPER
 
     def title(self, title, lead=None, kicker=None):
+        """Åbnings-slide. kicker= ignoreres (kun ÉN overskrift pr. slide)."""
         slide = self._new(CANVAS)
         # hvidt frame med stor shadow — teksten flyder inde i rammen
         fr = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, Inches(1.7),
@@ -288,13 +275,9 @@ class Deck:
         _solid(fr, PAPER)
         _border(fr, INK, 3.0)
         fr.shadow.inherit = False
-        # Brand-tema: grøn offset-shadow på titel-rammen (i stedet for grøn topkant)
-        _offset_shadow(fr, self.brand if self.brand_accent else INK, dist_pt=8)
-        blocks = []
-        if kicker and self.show_eyebrow:
-            blocks.append(dict(text=kicker, mono=True, size=14, bold=True,
-                               color=self.kicker_color, after=18))
-        blocks.append(dict(text=title, size=58, bold=True, color=INK, line=1.02, after=20))
+        # Grøn offset-shadow på titel-rammen (ikke en grøn topkant)
+        _offset_shadow(fr, self.brand, dist_pt=8)
+        blocks = [dict(text=title, size=58, bold=True, color=INK, line=1.02, after=20)]
         if lead:
             blocks.append(dict(text=lead, size=22, color=INK_SOFT, line=1.25))
         _fill(fr, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.6, mr=0.6, mt=0.55, mb=0.55)
@@ -302,7 +285,8 @@ class Deck:
         return slide
 
     def section(self, title, num=None, variant=None):
-        variant = variant or self.section_default
+        """Kapitel-divider. Standard = ØS-grøn fuldflade med hvidt logo."""
+        variant = variant or "brand"
         bg = {"dark": INK, "brand": self.brand, "yellow": ACCENT}.get(variant, CANVAS)
         slide = self._new(bg)
         dark = variant in ("dark", "brand")
@@ -318,12 +302,9 @@ class Deck:
     def content(self, title, bullets, kicker=None, accent_index=None):
         """bullets: liste af str. accent_index: index på bullet med rød markør."""
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "PRINCIP", Inches(0.66))
-        t = self._box(slide, MARGIN, Inches(1.15), Inches(11.5), Inches(1.2))
-        _txt(t.text_frame, title, size=42, bold=True, color=INK, line_pct=1.05)
-        self._accent(slide)
+        self._title(slide, title)
         # bullets
-        top = Inches(2.7)
+        top = CONTENT_TOP
         for i, b in enumerate(bullets):
             sq_color = self.signal if i == accent_index else INK
             sq = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, top + Pt(6),
@@ -340,20 +321,17 @@ class Deck:
     def split(self, title, left, right, kicker=None):
         """left/right: dict {'label': str, 'body': str}."""
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "OVERSIGT", Inches(0.66))
-        t = self._box(slide, MARGIN, Inches(1.15), Inches(11.5), Inches(1.2))
-        _txt(t.text_frame, title, size=42, bold=True, color=INK, line_pct=1.05)
-        self._accent(slide)
+        self._title(slide, title)
         colw = Inches(5.3)
         # divider
-        dv = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(6.6), Inches(3.0),
-                                    Pt(1), Inches(3.3))
+        dv = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(6.6), CONTENT_TOP,
+                                    Pt(1), CONTENT_BOT - CONTENT_TOP)
         _solid(dv, LINE_SOFT); _no_border(dv); dv.shadow.inherit = False
         for col, x in ((left, MARGIN), (right, Inches(7.0))):
-            lb = self._box(slide, x, Inches(3.0), colw, Inches(0.4))
+            lb = self._box(slide, x, CONTENT_TOP, colw, Inches(0.4))
             _txt(lb.text_frame, col["label"], font=FONT_MONO, size=13, bold=True,
                  color=MUTED, mono_label=True)
-            bd = self._box(slide, x, Inches(3.5), colw, Inches(2.7))
+            bd = self._box(slide, x, CONTENT_TOP + Inches(0.5), colw, Inches(4.4))
             _txt(bd.text_frame, col["body"], size=22, color=INK_SOFT, line_pct=1.3)
         self._footer(slide)
         return slide
@@ -378,17 +356,15 @@ class Deck:
         """cards: liste af dict {'num': str, 'label': str, 'trend': 'up'|'down'|None}.
         primary_index: index på det fremhævede kort (gul + rød shadow)."""
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "RESULTATER", Inches(0.66))
         if title:
-            t = self._box(slide, MARGIN, Inches(1.15), Inches(11.5), Inches(1.0))
-            _txt(t.text_frame, title, size=42, bold=True, color=INK)
-            self._accent(slide)
+            self._title(slide, title)
         n = len(cards)
         gap = Inches(0.4)
         total_w = SLIDE_W - 2 * MARGIN
         cw = Emu(int((total_w - gap * (n - 1)) / n))
-        top = Inches(3.0)
         ch = Inches(2.6)
+        # kortene centreres i indholdsbåndet — ikke skubbet ned mod bunden
+        top = Emu(int(CONTENT_MID - ch / 2)) if title else Emu(int(SLIDE_H / 2 - ch / 2))
         for i, c in enumerate(cards):
             x = Emu(int(MARGIN + i * (cw + gap)))
             primary = i == primary_index
@@ -419,15 +395,12 @@ class Deck:
               numeric_cols=(), highlight_row=None):
         """headers: list[str]. rows: list[list[str]]. numeric_cols: indices højrejusteret+mono."""
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "OVERSIGT", Inches(0.66))
         if title:
-            t = self._box(slide, MARGIN, Inches(1.15), Inches(11.5), Inches(1.0))
-            _txt(t.text_frame, title, size=42, bold=True, color=INK)
-            self._accent(slide)
+            self._title(slide, title)
         ncols = len(headers)
         nrows = len(rows) + 1
         tbl_w = SLIDE_W - 2 * MARGIN
-        gtbl = slide.shapes.add_table(nrows, ncols, MARGIN, Inches(2.7),
+        gtbl = slide.shapes.add_table(nrows, ncols, MARGIN, CONTENT_TOP,
                                       tbl_w, Inches(0.6 * nrows)).table
         # disable PPT auto-styling
         tbl_el = gtbl._tbl
@@ -457,9 +430,9 @@ class Deck:
         return slide
 
     def closing(self, title, cta=None, kicker=None):
+        """Afslutning. kicker= ignoreres (kun ÉN overskrift pr. slide)."""
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "TAK", Inches(2.0))
-        t = self._box(slide, MARGIN, Inches(2.5), Inches(11.5), Inches(1.6))
+        t = self._box(slide, MARGIN, Inches(2.5), TITLE_W, Inches(1.6))
         _txt(t.text_frame, title, size=66, bold=True, color=INK)
         if cta:
             btn = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, MARGIN, Inches(4.5),
@@ -481,12 +454,11 @@ class Deck:
 
     # ============================================================ PRÆSENTATIONS-ELEMENTER
 
-    def _head(self, slide, kicker, title, kicker_default="OVERSIGT"):
-        self._kicker(slide, kicker or kicker_default, Inches(0.66))
+    def _head(self, slide, kicker, title, kicker_default=None):
+        """Fælles slide-hoved. kicker-argumenterne ignoreres — de findes kun
+        så ældre deck-scripts stadig kan kaldes uændret."""
         if title:
-            t = self._box(slide, MARGIN, Inches(1.15), Inches(11.5), Inches(1.0))
-            _txt(t.text_frame, title, size=42, bold=True, color=INK, line_pct=1.05)
-            self._accent(slide)
+            self._title(slide, title)
 
     def _img(self, slide, l, t, w, h, label="BILLEDE", path=None):
         """Billed-felt: ægte billede hvis path, ellers grå placeholder m. mono-label."""
@@ -509,11 +481,7 @@ class Deck:
                                     Inches(9.0), Inches(3.4))
         _solid(ov, PAPER); _border(ov, INK, 3.0); ov.shadow.inherit = False
         _offset_shadow(ov, INK, dist_pt=8)
-        blocks = []
-        if kicker and self.show_eyebrow:
-            blocks.append(dict(text=kicker, mono=True, size=13, bold=True,
-                               color=self.kicker_color, after=14))
-        blocks.append(dict(text=title, size=44, bold=True, color=INK, line=1.04, after=14))
+        blocks = [dict(text=title, size=44, bold=True, color=INK, line=1.04, after=14)]
         if lead:
             blocks.append(dict(text=lead, size=18, color=INK_SOFT, line=1.2))
         _fill(ov, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.55, mr=0.55, mt=0.5, mb=0.5)
@@ -539,8 +507,8 @@ class Deck:
     def image_text(self, title, bullets, kicker=None, image=None,
                    image_left=False, accent_index=None):
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "CASE")
-        colw = Inches(5.5); top = Inches(2.5); ch = Inches(4.2)
+        self._head(slide, kicker, title)
+        colw = Inches(5.5); top = CONTENT_TOP; ch = CONTENT_BOT - CONTENT_TOP
         img_x = MARGIN if image_left else Inches(7.13)
         txt_x = Inches(7.13) if image_left else MARGIN
         self._img(slide, img_x, top, colw, ch, "BILLEDE", image)
@@ -557,13 +525,13 @@ class Deck:
 
     def image_grid(self, title=None, n=6, cols=3, kicker=None, images=None):
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "GALLERI")
+        self._head(slide, kicker, title)
         images = images or [None] * n
-        gap = Inches(0.25); top = Inches(2.5)
+        gap = Inches(0.25); top = CONTENT_TOP
         rows = (n + cols - 1) // cols
         gw = SLIDE_W - 2 * MARGIN
         cw = Emu(int((gw - gap * (cols - 1)) / cols))
-        gh = Inches(4.2)
+        gh = CONTENT_BOT - CONTENT_TOP
         chh = Emu(int((gh - gap * (rows - 1)) / rows))
         for i in range(n):
             r, c = divmod(i, cols)
@@ -575,8 +543,8 @@ class Deck:
 
     def agenda(self, items, title="Agenda", kicker=None, current=None):
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "INDHOLD")
-        y = Inches(2.4)
+        self._head(slide, kicker, title)
+        y = CONTENT_TOP
         for i, it in enumerate(items):
             is_cur = i == current
             nb = self._box(slide, MARGIN, y, Inches(1), Inches(0.6))
@@ -594,10 +562,11 @@ class Deck:
     def cards(self, items, title=None, kicker=None, accent_index=None):
         """items: liste af dict {'title': str, 'body': str}."""
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "FUNKTIONER")
-        n = len(items); gap = Inches(0.35); top = Inches(2.6)
+        self._head(slide, kicker, title)
+        n = len(items); gap = Inches(0.35); ch = Inches(3.6)
+        top = Emu(int(CONTENT_MID - ch / 2))     # centreret i indholdsbåndet
         gw = SLIDE_W - 2 * MARGIN
-        cw = Emu(int((gw - gap * (n - 1)) / n)); ch = Inches(3.6)
+        cw = Emu(int((gw - gap * (n - 1)) / n))
         for i, it in enumerate(items):
             acc = i == accent_index
             x = Emu(int(MARGIN + i * (cw + gap)))
@@ -617,8 +586,8 @@ class Deck:
     def timeline(self, steps, title=None, kicker=None, current=None):
         """steps: liste af dict {'when': str, 'what': str, 'desc': str}."""
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "PROCES")
-        n = len(steps); top = Inches(3.0)
+        self._head(slide, kicker, title)
+        n = len(steps); top = Emu(int(CONTENT_MID - Inches(1.5)))
         gw = SLIDE_W - 2 * MARGIN
         step_w = Emu(int(gw / n))
         for i, s in enumerate(steps):
@@ -644,8 +613,8 @@ class Deck:
     def comparison(self, left, right, title=None, kicker=None, win="right"):
         """left/right: dict {'head': str, 'items': [(bool_yes, str), ...]}."""
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "VALG")
-        top = Inches(2.6); ch = Inches(4.0)
+        self._head(slide, kicker, title)
+        ch = Inches(4.0); top = Emu(int(CONTENT_MID - ch / 2))
         cw = Inches(5.8); gap = Inches(0.4)
         for side, col in (("left", left), ("right", right)):
             x = MARGIN if side == "left" else Emu(int(MARGIN + cw + gap))
@@ -668,11 +637,10 @@ class Deck:
 
     def bignum(self, value, sub=None, kicker=None, trend=None):
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "NØGLETAL", Inches(1.6))
         col = INK
         if trend == "up": col = self.success
         if trend == "down": col = self.signal
-        nb = self._box(slide, MARGIN, Inches(2.1), Inches(11.5), Inches(2.8))
+        nb = self._box(slide, MARGIN, Inches(2.1), TITLE_W, Inches(2.8))
         nb.text_frame.word_wrap = False
         nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE   # langt tal krymper til at passe
         _txt(nb.text_frame, value, font=FONT_MONO, size=150, bold=True, color=col, line_pct=0.9)
@@ -685,8 +653,8 @@ class Deck:
     def bars(self, rows, title=None, kicker=None, accent_index=None):
         """rows: liste af dict {'label': str, 'pct': 0-100, 'value': str}."""
         slide = self._new(CANVAS)
-        self._head(slide, kicker, title, "FORDELING")
-        top = Inches(2.7); rh = Inches(0.55); gap = Inches(0.35)
+        self._head(slide, kicker, title)
+        top = CONTENT_TOP; rh = Inches(0.55); gap = Inches(0.35)
         lbl_w = Inches(2.2); val_w = Inches(1.1)
         track_x = MARGIN + lbl_w
         track_w = SLIDE_W - MARGIN - track_x - val_w - Inches(0.2)
@@ -709,7 +677,6 @@ class Deck:
 
     def testimonial(self, quote, name, role, kicker=None, image=None):
         slide = self._new(CANVAS)
-        self._kicker(slide, kicker or "UDTALELSE", Inches(0.66))
         self._img(slide, MARGIN, Inches(2.0), Inches(2.6), Inches(2.6), "PORTRÆT", image)
         bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(4.0), Inches(2.0), Pt(6), Inches(2.0))
         _solid(bar, self.signal); _no_border(bar); bar.shadow.inherit = False

@@ -1,149 +1,113 @@
 """
-Eksempel: byg et on-brand .pptx med Morten DS-generatoren.
-Kør:  python3 deck.example.py   ->  skriver morten-ds-example.pptx
+GALLERI — ét eksempel på hver slide-type i ØS-stilen.
+Kør:  python deck.example.py   ->  example.pptx
 
-Dette er mønsteret jeg følger når brugeren beder om "et PowerPoint om X":
-opret Deck, kald slide-typer i rækkefølge, gem.
+Dette er et komponentbibliotek, IKKE en deck du kopierer. Byg dit eget deck
+ud fra indholdet: vælg de slide-typer fortællingen kræver, i din rækkefølge.
 """
 from build_pptx import Deck
 
-deck = Deck(deck_title="Morten DS · Slide-template")
+deck = Deck(deck_title="Økonomistyrelsen · Eksempel")
 
 deck.title(
-    "Bærbar brutalisme.",
-    lead="Et slide-system der bærer din brand-karakter — sort kant, hård shadow, mono-label.",
-    kicker="Morten Design System · 2026",
+    "Årsrapport 2026.",
+    lead="Et slidedeck i Økonomistyrelsens identitet — bygget på den brutalistiske skabelon med ØS-grøn som anker.",
 )
 
-deck.section("Grundprincipper", num="01", variant="dark")
+deck.section("Årets resultater", num="01")   # bruger automatisk brand-grøn flade
 
 deck.content(
-    "Reservér de stærke elementer",
+    "Tre fokusområder",
     [
-        "Maks. én rød-shadow per slide — det er din primary action.",
-        "Maks. én gul flade per slide — det vigtigste KPI eller aktive sektion.",
-        "Hvis alt råber, lytter ingen.",
-        "Sort til alle yderkanter, lysegrå kun til indre delelinjer.",
-        "Tal er altid mono + tabular-nums.",
+        "Digitalisering af økonomiprocesser på tværs af staten.",
+        "Øget gennemsigtighed i statsregnskabet.",
+        "Stærkere datagrundlag for politiske beslutninger.",
+        "Reduktion af administrative byrder.",
     ],
-    kicker="Princip",
     accent_index=2,
 )
 
 deck.split(
-    "Mono er system. Sans er indhold.",
-    left={"label": "Mono — IBM Plex Mono",
-          "body": "Labels, metadata, status, tal, tider, tags, kbd. ALTID uppercase med letter-spacing."},
-    right={"label": "Sans — IBM Plex Sans",
-           "body": "Overskrifter, brødtekst, bullets, indhold. Normal case, naturlig læsning."},
-    kicker="Typografi",
+    "Før og efter",
+    left={"label": "Før", "body": "Manuelle indberetninger, spredte systemer, lange svartider."},
+    right={"label": "Efter", "body": "Samlet platform, automatiske flows, realtids-overblik."},
 )
 
 deck.statement(
-    "Den røde shadow betyder “tryk her”. Brug den én gang.",
-    source="— Designprincip nr. 3",
+    "Gode beslutninger bygger på pålidelige tal.",
+    source="— Økonomistyrelsen",
 )
 
 deck.stats(
     [
-        {"num": "128", "label": "Aktive komponenter"},
-        {"num": "+34%", "label": "Vækst i adoption", "trend": "up"},
-        {"num": "99.9", "label": "Uptime %"},
+        {"num": "1,2 mio", "label": "Behandlede bilag"},
+        {"num": "+18%", "label": "Effektivisering", "trend": "up"},
+        {"num": "99,8", "label": "Oppetid %"},
     ],
-    title="Tre tal der tæller",
-    kicker="Resultater · Q1 2026",
+    title="Året i tal",
     primary_index=1,
 )
 
 deck.table(
-    headers=["Komponent", "Ejer", "Brug", "Issues"],
+    headers=["Område", "Ansvar", "Budget (mio)", "Afvigelse"],
     rows=[
-        ["Button", "Core", "1.240", "2"],
-        ["DataTable", "Core", "512", "7"],
-        ["Modal", "Core", "388", "1"],
-        ["CommandPalette", "Core", "204", "0"],
+        ["Drift", "ØS", "240", "−2"],
+        ["Udvikling", "ØS", "118", "+5"],
+        ["Support", "ØS", "64", "0"],
     ],
-    title="Komponent-status",
-    kicker="Oversigt",
+    title="Budgetoversigt",
     numeric_cols=(2, 3),
     highlight_row=1,
 )
 
-# ---- Præsentations-elementer (billed-slides, agenda, kort, timeline osv.) ----
+# ---- Øvrige slide-typer ----
 
 deck.agenda(
-    ["Grundprincipper", "Slide-typer", "Billed-layouts", "Data & resultater"],
-    title="Agenda", kicker="Indhold", current=2,
+    ["Årets resultater", "Digitalisering", "Økonomi & budget", "Næste skridt"],
+    title="Agenda", current=1,
 )
 
 deck.cover(
     "Stort billede, stærk åbning.",
     lead="Overlay-boks med hård shadow oven på fuldt baggrundsbillede.",
-    kicker="Kapitel",
-    # image="sti/til/billede.jpg",   # udelad for placeholder
 )
-
-deck.image_full(
-    caption="Caption i sort stribe — mono-kicker + titel.",
-    kicker="Foto",
-)
-
-deck.image_text(
-    "Billede + tekst side om side",
-    [
-        "Halv-til-halv layout med skarpt billed-felt.",
-        "image_left=True giver spejlet variant.",
-        "Billedet får 2px sort kant som alt andet.",
-    ],
-    kicker="Case", accent_index=2,
-)
-
-deck.image_grid(title="Billed-grid", n=6, cols=3, kicker="Galleri")
 
 deck.cards(
     [
-        {"title": "Hurtig", "body": "Offset-shadows gør hierarkiet øjeblikkeligt læsbart."},
-        {"title": "Distinkt", "body": "Det fremhævede kort bruger gul flade — kun ét per slide."},
-        {"title": "Konsistent", "body": "Samme tokens som UI-systemet, skaleret til projektor."},
+        {"title": "Effektivitet", "body": "Færre manuelle trin gennem automatisering."},
+        {"title": "Gennemsigtighed", "body": "Det fremhævede kort — gul flade, kun ét per slide."},
+        {"title": "Datagrundlag", "body": "Bedre tal til politiske beslutninger."},
     ],
-    title="Tre kort med ikon-plads", kicker="Funktioner", accent_index=1,
+    title="Tre indsatsområder", accent_index=1,
 )
 
 deck.timeline(
     [
-        {"when": "Q1", "what": "Research", "desc": "Indsigt og behov afdækkes."},
-        {"when": "Q2", "what": "Design", "desc": "Koncept og prototyper."},
-        {"when": "Q3", "what": "Build", "desc": "Vi er her nu."},
-        {"when": "Q4", "what": "Launch", "desc": "Udrulning og læring."},
+        {"when": "Q1", "what": "Analyse", "desc": "Behov afdækkes."},
+        {"when": "Q2", "what": "Design", "desc": "Løsninger formes."},
+        {"when": "Q3", "what": "Udrulning", "desc": "Vi er her nu."},
+        {"when": "Q4", "what": "Evaluering", "desc": "Læring og justering."},
     ],
-    title="Fire trin", kicker="Proces", current=2,
+    title="Året i fire kvartaler", current=2,
 )
 
-deck.comparison(
-    left={"head": "Før", "items": [(False, "Spredte systemer"), (False, "Manuelle flows"), (True, "Kendt af alle")]},
-    right={"head": "Efter", "items": [(True, "Samlet platform"), (True, "Automatiske flows"), (True, "Realtids-overblik")]},
-    title="Før vs. efter", kicker="Valg", win="right",
-)
-
-deck.bignum("+34%", sub="Vækst i adoption år over år — ét tal, fuld fokus.",
-            kicker="Nøgletal", trend="up")
+deck.bignum("+18%", sub="Effektivisering år over år — positivt tal bærer ØS-grøn.",
+            trend="up")
 
 deck.bars(
     [
-        {"label": "Button", "pct": 100, "value": "1.240"},
-        {"label": "DataTable", "pct": 41, "value": "512"},
-        {"label": "Modal", "pct": 31, "value": "388"},
-        {"label": "Palette", "pct": 16, "value": "204"},
+        {"label": "Drift", "pct": 100, "value": "240"},
+        {"label": "Udvikling", "pct": 49, "value": "118"},
+        {"label": "Support", "pct": 27, "value": "64"},
     ],
-    title="Brug pr. komponent", kicker="Fordeling", accent_index=1,
+    title="Budget pr. område", accent_index=1,
 )
 
 deck.testimonial(
-    "“Systemet gør det nemt at lave slides der ser bevidste ud.”",
-    name="Morten Mølgaard", role="Designer", kicker="Udtalelse",
+    "“Gode beslutninger bygger på pålidelige tal.”",
+    name="Økonomistyrelsen", role="Statens økonomiforvaltning",
 )
 
-deck.closing("Lad os bygge.", cta="morten@design.system →", kicker="Tak")
+deck.closing("Tak.", cta="oes@oes.dk →")
 
-out = deck.save("morten-ds-example.pptx")
-print("Skrev", out)
+print("Skrev", deck.save("example.pptx"))

@@ -1,6 +1,9 @@
 /* =====================================================
-   Morten DS — Slide-framework
-   Bygget på ../styles/tokens.css. Bærbar brutalisme på 16:9.
+   Økonomistyrelsen — Slide-framework (16:9)
+   Bærbar brutalisme + ØS-grøn som identitets-anker.
+   Dette er systemets ENESTE stylesheet — der findes ikke
+   længere en separat "primær" stil at vælge imellem.
+   Brug:  <link rel="stylesheet" href="slides.css">
    ===================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;700&display=swap');
@@ -16,8 +19,11 @@
   --color-ink-soft: #333333;
   --color-muted: #6b6b6b;
   --color-line-soft: #e8e8e3;
-  --color-red: #ff5757;
-  --color-success: #16a34a;
+  /* ØS-identitet */
+  --color-brand: #066b43;         /* ØS-grøn — brand-anker */
+  --color-brand-soft: #b3e8ca;    /* lys grøn, supplerende */
+  --color-red: #ed5e66;           /* Laks — ØS' signalfarve (danger/vigtigt/fald) */
+  --color-success: #066b43;       /* positiv/vækst bærer ØS-grøn */
 
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
@@ -32,6 +38,9 @@
   --slide-w: 1280px;
   --slide-h: 720px;
   --slide-pad: 64px;
+  /* Ekstra luft i bunden: logoet sidder 27px fra bundkanten og er 41px højt,
+     så indhold der fylder hele højden må stoppe over det. */
+  --slide-pad-bottom: 78px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -66,7 +75,7 @@ html, body {
   width: var(--slide-w);
   height: var(--slide-h);
   background: var(--bg-canvas);
-  padding: var(--slide-pad);
+  padding: var(--slide-pad) var(--slide-pad) var(--slide-pad-bottom);
   display: none;
   flex-direction: column;
   border: 3px solid var(--color-ink);
@@ -127,9 +136,9 @@ html, body {
 
 /* Footer-stribe */
 .slide__footer {
+  position: relative;              /* anker for ØS-logoet, se nederst */
   margin-top: auto;
   padding-top: 20px;
-  border-top: 1px solid var(--color-line-soft);
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
@@ -176,9 +185,7 @@ html, body {
   letter-spacing: -0.03em;
   line-height: 1;
 }
-.slide--section.is-dark .kicker,
-.slide--section.is-dark .slide__footer { color: #bdbdbd; }
-.slide--section.is-dark .slide__footer { border-top-color: #444; }
+.slide--section.is-dark .kicker { color: #bdbdbd; }
 
 /* ===== 3. Content ===== */
 .slide--content { }
@@ -575,4 +582,89 @@ html, body {
   .deck, .deck__stage { position: static; transform: none !important; display: block; }
   .slide { display: flex !important; page-break-after: always; box-shadow: none; margin: 0 auto; }
   .deck__hud { display: none; }
+}
+
+/* =====================================================
+   ØS-identitet — grøn bruges SPARSOMT
+   Grøn lever kun her: titel-accent, section-dividers, logo,
+   titel-rammens shadow, positive tal, closing-CTA.
+   Alt andet er sort/hvid/gul som resten af systemet.
+   ===================================================== */
+
+/* ---------- Kun ÉN overskrift pr. slide ----------
+   Kicker-eyebrow'en OVER titlen er fjernet: den sorte titel står alene.
+   (Sub-labels i kolonner og billed-captions beholdes — de er ikke overskrifter.) */
+.slide > .kicker,
+.slide--title .frame > .kicker,
+.slide--cover .overlay > .kicker { display: none; }
+.slide--image-full .caption .kicker { color: #fff; }   /* hvid i den sorte caption-stribe */
+
+/* ---------- Grøn titel-accent ----------
+   Kort bjælke der sidder TÆT under overskriften og flugter med dens
+   venstrekant. Den hører til titlen — den må aldrig svæve nede i indholdet. */
+.slide-title { position: relative; }
+.slide-title::after {
+  content: '';
+  display: block;
+  width: 66px;
+  height: 8px;
+  margin: 10px 0 0 0;
+  background: var(--color-brand);
+}
+
+/* Fast luft mellem "overskrift + accent" og indholdet — ens i ALLE slide-typer.
+   Uden denne regel bestemmer hver enkelt layout-klasse selv sin margin-top, og
+   afstanden svinger fra 8px til 36px alt efter slide-type. */
+.slide .slide-title { margin-bottom: 30px; }
+.slide .slide-title + * { margin-top: 0; }
+
+/* Title-slide: grøn offset-shadow på rammen (ikke en grøn topkant) */
+.slide--title .frame { box-shadow: 8px 8px 0 var(--color-brand); }
+
+/* ---------- Section divider: ØS-grøn fuldflade ----------
+   Det stærke brand-moment mellem kapitler. Hvid tekst + hvidt logo. */
+.slide--section.is-brand {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+.slide--section.is-brand .kicker { color: rgba(255, 255, 255, 0.75); }
+.slide--section.is-brand .num { color: rgba(255, 255, 255, 0.9); }
+
+/* ---------- Officielt ØS-logo nederst til højre ----------
+   Logoet er hængt op på SLIDEN — ikke på footeren. Footeren er en flex-item,
+   og på slides med align-items: flex-start (section, closing) klapper den
+   sammen til nul bredde, så et logo i den ville lande nede til VENSTRE.
+   Her sidder det altid i højre hjørne med ens luft til højre og bund. */
+.slide::after {
+  content: '';
+  position: absolute;
+  right: 27px;
+  bottom: 27px;
+  width: 150px;
+  height: 41px;                 /* korrekt aspect (242x66) — ingen skalering væk */
+  background: url('assets/oes-logo-green.png') right bottom / contain no-repeat;
+  pointer-events: none;
+}
+/* Hvid logo på mørke/grønne flader (jf. brandguiden) */
+.slide--section.is-brand::after,
+.slide--section.is-dark::after {
+  background-image: url('assets/oes-logo-white.png');
+}
+/* Cover og full-bleed billeder går helt til kanten — intet logo (ingen plads).
+   Samme regel i PPTX. */
+.slide--cover::after,
+.slide--image-full::after { content: none; }
+
+/* Footer-striben bærer ikke længere noget: deck-titlen er redundant (logoet
+   siger det), side-nummeret er fjernet, og logoet sidder på sliden. Den er
+   skjult — så æder dens margin-top: auto heller ikke pladsen på de slides der
+   skal centrere lodret (title, section, statement, closing). Reglen står
+   tilbage, så ældre decks med <div class="slide__footer"> stadig ser rigtige ud. */
+.slide__footer { display: none; }
+
+/* Closing-CTA: ØS-grøn flade som brand-sign-off */
+.slide--closing .cta {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
