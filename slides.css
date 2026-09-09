@@ -639,7 +639,7 @@ html, body {
   display: block;
   width: 66px;
   height: 8px;
-  margin: 10px 0 0 0;
+  margin: 5px 0 0 0;             /* = 13px under baselinen, som i PPTX */
   background: var(--color-brand);
 }
 

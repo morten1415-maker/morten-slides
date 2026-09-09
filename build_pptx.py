@@ -15,7 +15,7 @@ Brug:    se deck.example.py — opret en Deck, kald .title()/.content()/... , ka
 """
 
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Cm, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE
 from pptx.enum.shapes import MSO_SHAPE
@@ -60,10 +60,14 @@ MARGIN  = Inches(0.66)
 # den grønne accent-bjælke sidder TÆT under den. Tallene er dem Morten selv
 # rettede sine decks til i hånden. Placér aldrig titel eller accent ad hoc.
 TITLE_TOP    = Inches(0.50)             # tekstboksens top (≈1,27 cm)
+TITLE_PT     = 42                       # overskriftens punktstørrelse
 TITLE_H      = Inches(0.80)
 TITLE_W      = SLIDE_W - 2 * MARGIN
 ACCENT_X     = MARGIN + Inches(0.1)     # flugter med titel-tekstens venstrekant
-ACCENT_Y     = Inches(1.142)            # ≈2,90 cm — lige under titlen
+# 3,26 cm: lige under overskriftens underlængder. Baselinen for en 42pt-titel
+# ligger på 2,92 cm, og et 'g' rækker ~0,34 cm derunder — en bjælke tættere på
+# rammer bogstavernes fødder på overskrifter som "Agenda".
+ACCENT_Y     = Cm(3.26)
 ACCENT_W     = Inches(0.7)
 ACCENT_H     = Pt(6)
 CONTENT_TOP  = Inches(1.70)             # indholdet starter her
@@ -453,7 +457,7 @@ class Deck:
              color=MUTED, mono_label=True)
         return tb
 
-    def _title(self, slide, title, size=42):
+    def _title(self, slide, title, size=TITLE_PT):
         """Slide-overskrift øverst + den grønne accent lige under."""
         t = self._box(slide, MARGIN, TITLE_TOP, TITLE_W, TITLE_H)
         _txt(t.text_frame, title, size=size, bold=True, color=INK, line_pct=1.05)

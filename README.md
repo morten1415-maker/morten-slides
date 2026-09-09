@@ -64,7 +64,7 @@ Overskrift, den grønne accent-linje og logoet placeres automatisk og må ikke s
 | | PPTX (13.333 × 7.5") | HTML (1280 × 720 px) |
 |---|---|---|
 | Overskrift, top | 0.50" | 64px |
-| Grøn accent, top | 1.142" | tæt under titlen |
+| Grøn accent, top | 3,26 cm | 5px under titlens linjeboks |
 | Indhold | 1.70" → 6.60" | 64px → 642px |
 | Logo, hjørne-luft | 0.28" | 27px |
 | Forsidens kasse | 11.0" × 4.0" @ 1.70" | 1056 × 384px @ 163px |

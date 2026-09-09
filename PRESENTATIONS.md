@@ -29,13 +29,20 @@ De er kodet ind i `slides.css` og `build_pptx.py`: **brug helperne, så rammer d
 | # | Regel | Hvordan |
 |---|---|---|
 | 1 | **Overskriften sidder ØVERST** — ikke skubbet ned midt på sliden | PPTX: `TITLE_TOP` = 0,50" (1,27 cm). HTML: første element i sliden. Brug `Deck._title()` / `<h2 class="slide-title">` |
-| 2 | **Den grønne linje hører til overskriften** — den skal sidde tæt under den, aldrig svæve mellem overskrift og indhold | PPTX: `ACCENT_Y` = 1,142" (2,90 cm), altid. HTML: `.slide-title::after` — kommer af sig selv. Placér den ALDRIG manuelt |
+| 2 | **Den grønne linje hører til overskriften** — den skal sidde tæt under den, aldrig svæve mellem overskrift og indhold | PPTX: `ACCENT_Y` = 3,26 cm, altid. HTML: `.slide-title::after` — kommer af sig selv. Placér den ALDRIG manuelt |
 | 3 | **Den grønne linje flugter med overskriftens venstrekant** | PPTX: `ACCENT_X` = `MARGIN + 0.1"` (tekstboksens indryk). HTML: automatisk |
 | 4 | **Logoet sidder i højre HJØRNE** med ens luft til højre og bund (0,28" / 27px) — ikke inde på tekstmargin | PPTX: `Deck._footer()`. HTML: `.slide::after` — kommer af sig selv. Tegn aldrig logoet selv |
 | 5 | **Kun ÉN overskrift pr. slide** — den sorte titel. Ingen kicker-eyebrow over den | `kicker=` findes stadig i API'et men ignoreres — undtagen i `image_full`, hvor det er caption-labelen (brug `label=`). Skriv dem ikke |
 
 **Én grøn linje pr. slide, og kun under en `slide-title`.** Sektions-dividers, title-slide, cover
 og closing har ingen grøn linje — de bærer grøn på andre måder (fuldflade, shadow, CTA).
+
+**Hvorfor 3,26 cm og ikke tættere på?** Baselinen for en 42pt-overskrift ligger på
+2,92 cm. Bjælken er kun 1,78 cm bred, så den ligger under overskriftens første par
+bogstaver — og har et af dem en underlængde ('g', 'p', 'y'), rækker den ~0,34 cm
+under baselinen. En bjælke på fx 2,90 eller 3,03 cm bliver derfor gennemskåret af
+'g'-et i en overskrift som "Agenda". 3,26 cm går fri af underlængderne uden at
+slippe overskriften. Samme afstand i HTML: 13px under baselinen.
 
 ---
 
@@ -46,7 +53,7 @@ Samme rytme i HTML og PPTX, så de to formater ser ens ud:
 ```
                        PPTX (13.333 x 7.5")     HTML (1280 x 720 px)
 overskrift, top            0.50"                    64px  (slide-padding)
-grøn accent, top           1.142"                   tæt under titlen (10px)
+grøn accent, top           3,26 cm                  5px under titlens linjeboks
 indhold starter            1.70"                    +30px under accenten (fast)
 indhold slutter            6.60"                    642px (padding-bottom 78px)
 logo (h x b)               0.42" x 1.55"            41 x 150px

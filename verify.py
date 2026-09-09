@@ -67,7 +67,7 @@ REFERENCE_CM = {
     "MARGIN": 1.68,          # sikker margin til alle kanter
     "TITLE_TOP": 1.27,       # overskriftens tekstboks, top
     "ACCENT_X": 1.93,        # grøn accent, venstrekant (flush med titel-teksten)
-    "ACCENT_Y": 2.90,        # grøn accent, top — tæt under titlen
+    "ACCENT_Y": 3.26,        # grøn accent, top — fri af overskriftens underlængder
     "ACCENT_W": 1.78,        # grøn accent, bredde
     "ACCENT_H": 0.21,        # grøn accent, højde (6pt)
     "CONTENT_TOP": 4.32,     # indholdet starter
@@ -282,6 +282,35 @@ def _css_px(css, selector, prop):
     return float(nums[0]) if nums else None
 
 
+def _css_num(css, selector, prop):
+    """Som _css_px, men til enhedsløse værdier (fx line-height: 1.05)."""
+    block = _css_block(css, selector)
+    if block is None:
+        return None
+    m = re.search(r"(?m)(?:^|;)\s*%s\s*:\s*([^;]+)" % re.escape(prop), block)
+    if not m:
+        return None
+    n = re.findall(r"-?\d+(?:\.\d+)?", m.group(1))
+    return float(n[0]) if n else None
+
+
+def _font_metrics(path):
+    """(unitsPerEm, ascender, descender) fra en TTF's head/hhea-tabeller."""
+    import struct
+    try:
+        b = open(path, "rb").read()
+        num = struct.unpack(">H", b[4:6])[0]
+        tabs = {}
+        for i in range(num):
+            o = 12 + i * 16
+            tabs[b[o:o + 4]] = struct.unpack(">I", b[o + 8:o + 12])[0]
+        upem = struct.unpack(">H", b[tabs[b"head"] + 18:tabs[b"head"] + 20])[0]
+        asc, desc = struct.unpack(">hh", b[tabs[b"hhea"] + 4:tabs[b"hhea"] + 8])
+        return upem, asc, desc
+    except Exception:
+        return None
+
+
 def check_parity():
     import build_pptx as bp
     css = open(os.path.join(HERE, "slides.css"), encoding="utf-8").read()
@@ -311,6 +340,39 @@ def check_parity():
             continue
         check("paritet: %s" % label, near(got, want, tol),
               "css %gpx  vs  pptx %.1fpx" % (got, want))
+
+    # --- accent-bjælkens afstand under overskriftens baseline ---
+    # Den vigtigste paritet, og den sværeste at se: de to formater sætter
+    # overskriften forskelligt (PPTX-tekstboks vs. CSS-linjeboks), så man kan
+    # ikke bare sammenligne absolutte positioner. Vi regner baselinen ud i
+    # begge formater ud fra fontens egne metrikker og sammenligner afstanden.
+    m = _font_metrics(os.path.join(FONTS_DIR, "IBMPlexSans-Bold.ttf"))
+    if m is None:
+        check("paritet: accent under baselinen", False, "kunne ikke læse fontmetrikker")
+        return
+    upem, asc, desc = m
+
+    # PPTX: tekstboksens top + python-pptx' default tIns (0.05") + ascender
+    T_INS = 0.05
+    pptx_baseline = bp.TITLE_TOP / 914400.0 + T_INS + asc / upem * bp.TITLE_PT / 72.0
+    pptx_gap = (bp.ACCENT_Y / 914400.0 - pptx_baseline) * PX_PER_INCH
+
+    # HTML: linjeboksens halve leading + ascender. Slide-padding går ud med
+    # sig selv, fordi begge sider måles fra overskriftens egen top.
+    fs = _css_px(css, ".slide-title", "font-size")
+    lh = _css_num(css, ".slide-title", "line-height")
+    mt = _css_px(css, ".slide-title::after", "margin")
+    if None in (fs, lh, mt):
+        check("paritet: accent under baselinen", False,
+              "fandt ikke font-size/line-height/margin i slides.css")
+        return
+    line_box = lh * fs
+    content_area = (asc - desc) / upem * fs
+    half_leading = (line_box - content_area) / 2.0
+    html_gap = line_box + mt - half_leading - asc / upem * fs
+
+    check("paritet: accent under baselinen", near(html_gap, pptx_gap, 1.5),
+          "css %.1fpx  vs  pptx %.1fpx" % (html_gap, pptx_gap))
 
     # kassens top: slide-padding + 3px ramme + frame margin-top
     mt = _css_px(css, ".slide--title .frame", "margin-top")

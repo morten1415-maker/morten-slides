@@ -20,8 +20,10 @@ deck-scripts ikke går i stykker. `slides-oes.css` importerer blot `slides.css`.
 Disse fem er kodet ind i CSS'en og i `build_pptx.py`. **Brug helperne — placér dem ikke selv.**
 
 1. **Overskriften sidder ØVERST** på sliden (PPTX: 0,50" / 1,27 cm), ikke skubbet ned midt på.
-2. **Den grønne linje hører til overskriften** og sidder tæt under den (PPTX: 1,142" / 2,90 cm).
-   Den må aldrig svæve mellem overskrift og indhold, og den må kun findes under en `slide-title`.
+2. **Den grønne linje hører til overskriften** og sidder tæt under den (PPTX: `ACCENT_Y`
+   = 3,26 cm). Den må aldrig svæve mellem overskrift og indhold, og den må kun findes
+   under en `slide-title`. Værdien er valgt så bjælken går fri af underlængder —
+   et 'g' i fx "Agenda" rækker ned i den hvis den flyttes højere op.
 3. **Den grønne linje flugter med overskriftens venstrekant.**
 4. **Logoet sidder i højre HJØRNE** med ens luft til højre og bund — ikke inde på tekstmargin.
 5. **Kun ÉN overskrift pr. slide.** Ingen kicker-eyebrow over titlen.
