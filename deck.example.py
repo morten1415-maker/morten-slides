@@ -9,7 +9,7 @@ ud fra indholdet: vælg de slide-typer fortællingen kræver, i din rækkefølge
 import os
 import sys
 
-from build_pptx import CONTENT_TOP, GAP, W, Deck, body, sticky
+from build_pptx import CONTENT_TOP, GAP, W, Deck, body, card, para
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 deck = Deck(deck_title="Økonomistyrelsen · Galleri")
@@ -95,10 +95,13 @@ deck.process(
 )
 
 # Egne layouts: deck.content("Titel") + byggeklodserne. sub = forklaring under titlen.
-s = deck.content("Byg selv videre", sub="Post-its, kort og labels er byggeklodser.")
+s = deck.content("Byg selv videre", sub="Kort, labels og streger er byggeklodser.")
 for i, parts in enumerate((("Én ", "afgrænset", " antagelse"), ("Kan ", "testes", ""), ("Har et ", "skarpt", " mål"))):
-    runs = [body(t, 24, bold=(j == 1)) for j, t in enumerate(parts) if t]
-    sticky(s, W / 2 - 236 * 1.5 - GAP + i * (236 + GAP), CONTENT_TOP + 90, 236, runs, off=8)
+    x = W / 2 - 236 * 1.5 - GAP + i * (236 + GAP)
+    card(s, x, CONTENT_TOP + 90, 236, 236)
+    s.text(x + 21, CONTENT_TOP + 111, 194, 194,
+           [para(*[body(t, 24, bold=(j == 1)) for j, t in enumerate(parts) if t], align="ctr", lh=1.25)],
+           anchor="ctr")
 
 # ---- Del 2: citater og billeder ----
 deck.section("Citater og billeder", num="02")

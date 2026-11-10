@@ -37,7 +37,7 @@ kan tjekkes uden PowerPoint. `save()` advarer, hvis tekst ikke kan være i sin b
 
 | Fil | Hvad |
 |---|---|
-| `build_pptx.py` | **Stilen:** tokens, byggeklodser (`card`, `block`, `chip`, `square_list`, `sticky`, `picture`) og `Deck` med alle slide-typer |
+| `build_pptx.py` | **Stilen:** tokens, byggeklodser (`card`, `block`, `chip`, `square_list`, `picture`) og `Deck` med alle slide-typer |
 | `oes_pptx.py` | **Motoren:** elementer, tekst-ombrydning, .pptx-skrivning, PNG-preview, font-indlejring |
 | `deck.example.py` | Galleriet i PPTX-form → `example.pptx` |
 | `template.html` | Galleriet i HTML-form |

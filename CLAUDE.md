@@ -37,9 +37,9 @@ De er kodet ind i `build_pptx.py` og `slides.css`. **Brug metoderne — placér 
 - ❌ Lav ikke en kopi af galleriet med samme slides og rækkefølge. Brug ikke alle typer.
 - ✅ Start fra indholdet: find budskabet og fortællingen, og vælg derudfra hvilke typer,
   hvor mange slides og hvilken rækkefølge.
-- ✅ **Opfind nye layouts** når indholdet kræver det (diagrammer, modeller, post-it-øvelser):
+- ✅ **Opfind nye layouts** når indholdet kræver det (diagrammer, modeller):
   `s = deck.content("Titel")` og tegn fra `CONTENT_TOP` med byggeklodserne (`card`, `block`,
-  `chip`, `square_list`, `sticky`, `picture`, `s.line/rect/ellipse/path/text`). Se afsnittet
+  `chip`, `square_list`, `picture`, `s.line/rect/ellipse/path/text`). Se afsnittet
   "Byg selv" i `PRESENTATIONS.md`.
 - ✅ Byg modeller op slide for slide (samme layout, ét nyt element) i stedet for animation.
 

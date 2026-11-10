@@ -30,7 +30,6 @@
   --hilite: #b3e8ca;            /* lysegrøn: overstregning, fremhævet række/kort */
   --laks: #ed5e66;              /* signal på store flader og på sort */
   --laks-text: #c93a44;         /* laks til tekst på lys grund (4,6:1) */
-  --sticky: #fff9b1;            /* post-it */
 
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
@@ -188,18 +187,6 @@ mark, .hl { background: var(--hilite); color: inherit; padding: 0 0.08em; }
   background: var(--paper);
   border: var(--border) solid var(--black);
   box-shadow: var(--shadow) var(--shadow) 0 var(--black);
-}
-
-/* Post-it */
-.sticky {
-  background: var(--sticky);
-  border: var(--border) solid var(--black);
-  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
-  width: 236px; height: 236px;
-  padding: 21px;
-  display: flex; align-items: center; justify-content: center;
-  text-align: center;
-  font-size: 24px; line-height: 1.25;
 }
 
 /* Kilde-/note-linje nederst til venstre. Virker på enhver slide. */

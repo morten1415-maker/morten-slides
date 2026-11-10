@@ -52,7 +52,6 @@ flade forskudt bagved, IBM Plex Sans til indhold og IBM Plex Mono til alt "syste
 | `HILITE` | `#B3E8CA` | Lysegrøn overstregning i tekst, fremhævet tabelrække / nøgletalskort |
 | `LAKS` | `#ED5E66` | Signal på **store flader og på sort**: kapitel-label, citatstreg, delnummer i titelblokken |
 | `LAKS_TEXT` | `#C93A44` | Laks til **tekst på lys grund**: mono-labels, numre, negative tal (`LAKS` har kun 3:1 der) |
-| `STICKY` | `#FFF9B1` | Kun post-its |
 
 - **Grøn er det fremhævede, laks er systemets stemme.** Fremhæv højst ét element pr. slide.
 - Gul bruges ikke længere som fremhævning (den gamle `#FEF3C7`) — brug `HILITE`.
@@ -167,11 +166,11 @@ brugerens egne. Har du kun tal uden kilde, så spørg efter kilden.
 
 ## Byg selv — byggeklodserne
 
-Når ingen slide-type passer (diagrammer, modeller, post-it-øvelser):
+Når ingen slide-type passer (diagrammer, modeller):
 
 ```python
 from build_pptx import (Deck, CONTENT_TOP, CONTENT_BOT, PAD_X, W, BLACK, BRAND, LAKS_TEXT, DIM, INK,
-                        card, block, chip, chip_w, square_list, sticky, picture,
+                        card, block, chip, chip_w, square_list, picture,
                         mono, num, head, body, para)
 
 s = deck.content("Double Diamond")            # titelblok + tom flade fra CONTENT_TOP
@@ -181,7 +180,6 @@ s.ellipse(x, y, w, h, fill=BRAND, line=BLACK, lw=3)
 s.text(x, y, w, h, [para(mono("Label", 12, DIM), align="ctr")])
 chip(s, x, y, "Problem")                      # lille sort label
 card(s, x, y, w, h)                           # hvid boks, sort kant, hård skygge
-sticky(s, x, y, 236, [body("Er "), body("nem", bold=True), body(" at bruge")])
 square_list(s, x, y, w, ["Punkt 1", ("Fed: ", "resten")])
 picture(s, "foto.jpg", x, y, w, h, side="right", alt="…")             # med grøn flade
 ```
@@ -212,7 +210,7 @@ i hver genereret .pptx** (som EOT — en rå TTF giver fejl i PowerPoints font-d
 ## Don'ts
 
 - ❌ Ingen grøn accent-streg under overskrifter (den gamle stil) — titlen *er* blokken.
-- ❌ Ingen grønne eller sorte helflade-slides. Ingen gule flader (kun post-its).
+- ❌ Ingen grønne eller sorte helflade-slides. Ingen gule flader.
 - ❌ Ingen kant om billeder, ingen blur-skygger, ingen gradienter, ingen runde hjørner.
 - ❌ Ingen eyebrow/kicker over en titelblok. (Over en *fri* overskrift ved et billede er den fin.)
 - ❌ Ikke to titelblokke på én slide, og ikke titelblok + billede med grøn flade i `media_text`.

@@ -325,7 +325,7 @@ def check_parity():
               "css %gpx  vs  pptx %gpx" % (pad, bp.TITLE_PAD[1]))
 
     for css_name, py_name in (("ground", "GROUND"), ("brand", "BRAND"), ("hilite", "HILITE"), ("laks", "LAKS"),
-                              ("laks-text", "LAKS_TEXT"), ("dim", "DIM"), ("ink", "INK"), ("sticky", "STICKY"),
+                              ("laks-text", "LAKS_TEXT"), ("dim", "DIM"), ("ink", "INK"),
                               ("empty", "EMPTY"), ("rule", "RULE")):
         got = _css_color(css, css_name)
         check("paritet: farven --%s" % css_name, got == getattr(bp, py_name),

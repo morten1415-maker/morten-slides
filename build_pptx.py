@@ -23,7 +23,7 @@ Brug:
     deck.save("mit-deck.pptx", preview_dir="preview")   # preview_dir er valgfri
 
 Mangler der en slide-type: brug deck.content("Titel") og tegn selv fra
-CONTENT_TOP med byggeklodserne (card, block, chip, square_list, sticky,
+CONTENT_TOP med byggeklodserne (card, block, chip, square_list, picture,
 s.rect/s.line/s.text/s.media) — eller tilføj en ny metode her i samme stil.
 """
 import math
@@ -43,7 +43,6 @@ DIM = "6E6E6E"          # nedtonet tekst, stadig læsbar (4,6:1 på grunden)
 HILITE = "B3E8CA"       # lysegrøn: overstregning, fremhævet række/kort
 RULE = "D6D6D6"         # tynde indre delelinjer
 EMPTY = "E2E2DE"        # billed-pladsholder
-STICKY = "FFF9B1"       # post-it
 BORDER = 3              # kantbredde
 SHADOW = 8              # hård skygge
 GAP = 40                # luft mellem spalter
@@ -152,14 +151,6 @@ def square_list(s, x, y, w, items, gap=18, lh=1.4, size=S_BODY, accent_index=Non
 
 def list_height(w, items, gap=18, lh=1.4, size=S_BODY):
     return sum(layout([para(*rich(it, size), lh=lh)], w - 30)[1] for it in items) + gap * max(len(items) - 1, 0)
-
-
-def sticky(s, x, y, size_px, text, text_size=S_LEAD, off=6):
-    """Post-it med sort kant og hård skygge. text: str, tuple eller liste af run()."""
-    card(s, x, y, size_px, size_px, fill=STICKY, off=off, name="Post-it")
-    inset = size_px * 0.09
-    s.text(x + inset, y + inset, size_px - 2 * inset, size_px - 2 * inset,
-           [para(*rich(text, text_size), align="ctr", lh=1.25)], anchor="ctr")
 
 
 def picture(s, image, x, y, w, h, side=None, focus=(0.5, 0.5), alt="", label="Billede", fit="cover"):
