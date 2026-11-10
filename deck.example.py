@@ -1,56 +1,171 @@
+# -*- coding: utf-8 -*-
 """
 GALLERI — ét eksempel på hver slide-type i ØS-stilen.
-Kør:  python deck.example.py   ->  example.pptx
+Kør:  python deck.example.py   ->  example.pptx + preview/slide-NN.png
 
 Dette er et komponentbibliotek, IKKE en deck du kopierer. Byg dit eget deck
 ud fra indholdet: vælg de slide-typer fortællingen kræver, i din rækkefølge.
 """
-from build_pptx import Deck
+import os
+import sys
 
-deck = Deck(deck_title="Økonomistyrelsen · Eksempel")
+from build_pptx import CONTENT_TOP, GAP, W, Deck, body, sticky
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+deck = Deck(deck_title="Økonomistyrelsen · Galleri")
+
+# ---- Åbning ----
 deck.title(
     "Årsrapport 2026",
-    lead="Et slidedeck i Økonomistyrelsens identitet — bygget på den brutalistiske skabelon med ØS-grøn som anker.",
+    lead="Status på digitalisering, økonomi og de næste skridt.",
     meta="Økonomistyrelsen · Ledelsesoverblik · August 2026",
 )
 
-deck.section("Årets resultater", num="01")   # bruger automatisk brand-grøn flade
+deck.hero(
+    "Ét samlet system",
+    eyebrow="Forside med billede",
+    lead="deck.title(…, image=…) giver samme layout: tekst til venstre, billede med grøn flade til højre.",
+)
+
+deck.agenda(
+    ["Årets resultater", "Digitalisering", "Økonomi og budget", "Næste skridt"],
+    title="Agenda", current=1,
+)
+
+# ---- Del 1: tekst og struktur ----
+deck.section("Årets resultater", num="01")
 
 deck.content(
-    "Tre fokusområder",
+    "Fire fokusområder",
     [
-        "Digitalisering af økonomiprocesser på tværs af staten.",
-        "Øget gennemsigtighed i statsregnskabet.",
-        "Stærkere datagrundlag for politiske beslutninger.",
-        "Reduktion af administrative byrder.",
+        ("Digitalisering: ", "økonomiprocesser samles på tværs af staten."),
+        ("Gennemsigtighed: ", "statsregnskabet bliver lettere at læse."),
+        ("Datagrundlag: ", "bedre tal til politiske beslutninger."),
+        ("Færre byrder: ", "mindre administration for institutionerne."),
     ],
     accent_index=2,
 )
 
 deck.split(
     "Før og efter",
-    left={"label": "Før", "body": "Manuelle indberetninger, spredte systemer, lange svartider."},
-    right={"label": "Efter", "body": "Samlet platform, automatiske flows, realtids-overblik."},
+    left={"label": "Før", "head": "Spredte systemer",
+          "body": "Manuelle indberetninger, mange indgange og lange svartider."},
+    right={"label": "Efter", "head": "Én samlet platform", "accent": True,
+           "body": "Automatiske flows og overblik i realtid — ét sted at lede."},
+    arrow=True,
 )
 
-deck.statement(
-    "Gode beslutninger bygger på pålidelige tal.",
-    attribution="— Økonomistyrelsen",
+deck.cards(
+    [
+        {"title": "Effektivitet", "body": "Færre manuelle trin gennem automatisering."},
+        {"title": "Gennemsigtighed", "body": "Den fremhævede spalte bærer ØS-grøn — kun én pr. slide."},
+        {"title": "Datagrundlag", "body": "Bedre tal til politiske beslutninger."},
+    ],
+    title="Tre indsatsområder", accent_index=1,
 )
+
+deck.comparison(
+    left={"head": "I dag", "items": [
+        (False, "Manuelle indberetninger"),
+        (False, "Spredte systemer"),
+        (True, "Kendt af brugerne"),
+    ]},
+    right={"head": "Fremover", "items": [
+        (True, "Automatiske flows"),
+        (True, "Samlet platform"),
+        (True, "Overblik i realtid"),
+    ]},
+    title="Gammel og ny løsning", win="right",
+)
+
+deck.timeline(
+    [
+        {"when": "Q1", "what": "Analyse", "desc": "Behovene afdækkes."},
+        {"when": "Q2", "what": "Design", "desc": "Løsningerne formes."},
+        {"when": "Q3 · nu", "what": "Udrulning", "desc": "Første institutioner er i gang."},
+        {"when": "Q4", "what": "Evaluering", "desc": "Læring og justering."},
+    ],
+    title="Året i fire kvartaler", current=2,
+)
+
+deck.process(
+    ["Kortlægning af antagelser", "Testprotokol", "Pilottest", "Rekruttering", "Test", "Dataanalyse",
+     "Formidling af indsigter"],
+    title="Testprocessen", current="Pilottest",
+)
+
+# Egne layouts: deck.content("Titel") + byggeklodserne. sub = forklaring under titlen.
+s = deck.content("Byg selv videre", sub="Post-its, kort og labels er byggeklodser.")
+for i, parts in enumerate((("Én ", "afgrænset", " antagelse"), ("Kan ", "testes", ""), ("Har et ", "skarpt", " mål"))):
+    runs = [body(t, 24, bold=(j == 1)) for j, t in enumerate(parts) if t]
+    sticky(s, W / 2 - 236 * 1.5 - GAP + i * (236 + GAP), CONTENT_TOP + 90, 236, runs, off=8)
+
+# ---- Del 2: citater og billeder ----
+deck.section("Citater og billeder", num="02")
+
+deck.statement(
+    "“A person's perceptions and responses that result from the use or anticipated use of a product, "
+    "system or service.”",
+    attribution="ISO 9241-210", title="Hvad er UX?", highlight_part="use or anticipated use",
+)
+
+deck.statement("Gode beslutninger bygger på pålidelige tal.", attribution="Økonomistyrelsen")
+
+deck.testimonial(
+    "“Vi fik ét sted at lede — og tallene stemmer første gang.”",
+    name="Navn Efternavn", role="Økonomichef, institution",
+)
+
+deck.image_text(
+    "Billede og tekst",
+    [
+        "Billedet står i en fast kvadratisk ramme.",
+        "Den grønne flade er forskudt bagved.",
+        "image_left=True spejler layoutet.",
+    ],
+    image_left=True,
+)
+
+deck.media_text("Frilagt motiv", eyebrow="media_text(free=True)", body_paras=None,
+                bullets=["Uden billede vises en pladsholder.", "Med free=True står et frilagt PNG uden flade."])
+
+deck.image_grid(title="Billed-gitter", n=6, cols=3)
+
+deck.cover(
+    "Stort billede, stærk åbning",
+    lead="Sort titelblok med grøn skygge oven på et billede i fuld flade.",
+)
+
+deck.image_full(caption="Billedtekst i sort blok oven på et billede i fuld flade.", label="Foto")
+
+# ---- Del 3: tal ----
+deck.section("Data og resultater", num="03")
+
+deck.bignum("+18 %", sub="Effektivisering år over år. Ét tal, fuld opmærksomhed.",
+            trend="up", source="Kilde: Statens Regnskab, 2026")
 
 deck.stats(
     [
-        {"num": "1,2 mio", "label": "Behandlede bilag"},
-        {"num": "+18%", "label": "Effektivisering", "trend": "up"},
-        {"num": "99,8", "label": "Oppetid %"},
+        {"num": "1,2 mio.", "label": "Behandlede bilag"},
+        {"num": "+18 %", "label": "Effektivisering", "trend": "up"},
+        {"num": "99,8 %", "label": "Oppetid"},
     ],
     title="Året i tal", source="Kilde: Statens Regnskab, 2026",
     primary_index=1,
 )
 
+deck.bars(
+    [
+        {"label": "Drift", "pct": 100, "value": "240"},
+        {"label": "Udvikling", "pct": 49, "value": "118"},
+        {"label": "Support", "pct": 27, "value": "64"},
+    ],
+    title="Budget pr. område", accent_index=1,
+    source="Mio. kr. Kilde: Statens Regnskab, 2026",
+)
+
 deck.table(
-    headers=["Område", "Ansvar", "Budget (mio)", "Afvigelse"],
+    headers=["Område", "Ansvar", "Budget, mio. kr.", "Afvigelse"],
     rows=[
         ["Drift", "ØS", "240", "−2"],
         ["Udvikling", "ØS", "118", "+5"],
@@ -61,86 +176,9 @@ deck.table(
     highlight_row=1,
 )
 
-# ---- Øvrige slide-typer ----
+deck.closing("Tak", lines=["Spørgsmål og kommentarer er velkomne."], cta="oes@oes.dk")
 
-deck.agenda(
-    ["Årets resultater", "Digitalisering", "Økonomi & budget", "Næste skridt"],
-    title="Agenda", current=1,
-)
-
-deck.cover(
-    "Stort billede, stærk åbning.",
-    lead="Overlay-boks med hård shadow oven på fuldt baggrundsbillede.",
-)
-
-deck.image_full(
-    caption="Full-bleed billede med caption i sort stribe.",
-    label="Foto",
-)
-
-deck.image_text(
-    "Billede til venstre, tekst til højre",
-    [
-        "Halv-til-halv layout med skarpt billed-felt.",
-        "image_left=True spejler layoutet.",
-        "Billedet får 2px sort kant som alt andet.",
-    ],
-    image_left=True, accent_index=2,
-)
-
-deck.image_grid(title="Billed-grid", n=6, cols=3)
-
-deck.cards(
-    [
-        {"title": "Effektivitet", "body": "Færre manuelle trin gennem automatisering."},
-        {"title": "Gennemsigtighed", "body": "Det fremhævede kort — gul flade, kun ét per slide."},
-        {"title": "Datagrundlag", "body": "Bedre tal til politiske beslutninger."},
-    ],
-    title="Tre indsatsområder", accent_index=1,
-)
-
-deck.timeline(
-    [
-        {"when": "Q1", "what": "Analyse", "desc": "Behov afdækkes."},
-        {"when": "Q2", "what": "Design", "desc": "Løsninger formes."},
-        {"when": "Q3", "what": "Udrulning", "desc": "Vi er her nu."},
-        {"when": "Q4", "what": "Evaluering", "desc": "Læring og justering."},
-    ],
-    title="Året i fire kvartaler", current=2,
-)
-
-deck.comparison(
-    left={"head": "I dag", "items": [
-        (False, "Manuelle indberetninger"),
-        (False, "Spredte systemer"),
-        (True, "Kendt af brugerne"),
-    ]},
-    right={"head": "Efter", "items": [
-        (True, "Automatiske flows"),
-        (True, "Samlet platform"),
-        (True, "Realtids-overblik"),
-    ]},
-    title="Før vs. efter", win="right",
-)
-
-deck.bignum("+18%", sub="Effektivisering år over år — positivt tal bærer ØS-grøn.",
-            trend="up", source="Kilde: Statens Regnskab, 2026")
-
-deck.bars(
-    [
-        {"label": "Drift", "pct": 100, "value": "240"},
-        {"label": "Udvikling", "pct": 49, "value": "118"},
-        {"label": "Support", "pct": 27, "value": "64"},
-    ],
-    title="Budget pr. område", accent_index=1,
-    source="Kilde: Statens Regnskab, 2026",
-)
-
-deck.testimonial(
-    "“Gode beslutninger bygger på pålidelige tal.”",
-    name="Økonomistyrelsen", role="Statens økonomiforvaltning",
-)
-
-deck.closing("Tak.", cta="oes@oes.dk →")
-
-print("Skrev", deck.save("example.pptx"))
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")
+    out = deck.save(os.path.join(HERE, "example.pptx"), preview_dir=os.path.join(HERE, "preview"))
+    print("Skrev %s — %d slides, %d advarsler" % (os.path.basename(out), len(deck.slides), len(deck.warnings)))

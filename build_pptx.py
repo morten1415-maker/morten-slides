@@ -1,934 +1,656 @@
+# -*- coding: utf-8 -*-
 """
-Økonomistyrelsen — PowerPoint-generator
-=======================================
-On-brand .pptx der følger PRESENTATIONS.md: bærbar brutalisme på 16:9 —
-sorte kanter, hårde offset-shadows (ingen blur), IBM Plex (mono = system,
-sans = indhold), sparsom gul/laks + ØS-grøn som identitets-anker.
+Økonomistyrelsens slide-system — stilen og slide-typerne (PowerPoint).
 
-Der er ÉN stil. Ingen theme-parameter at vælge imellem.
+Motoren ligger i oes_pptx.py (elementer, tekst-ombrydning, .pptx-skrivning,
+PNG-preview, font-indlejring). Denne fil er STILEN:
 
-IBM Plex indlejres i hver genereret fil, så typografien holder også på maskiner
-uden fonten installeret (fx en låst VDI). Slå fra med Deck(embed_fonts=False).
+  - lys grå grund (#F4F4F2), sorte 3 px kanter, hårde skygger uden blur
+  - overskriften står i en sort blok med grøn skygge ("skiltet"), øverst til venstre
+  - kapitler: laks-label + stor sort titelblok
+  - billeder får en grøn flade forskudt bagved (signaturen) — ingen kant
+  - IBM Plex Sans = indhold, IBM Plex Mono = system (labels, numre, tal)
+  - laks = signal (numre, labels, fald), lysegrøn = fremhævning
 
-Kræver:  pip install python-pptx
-Brug:    se deck.example.py — opret en Deck, kald .title()/.content()/... , kald .save()
+Alt måles i px på et 1280 x 720-canvas — de samme tal som i slides.css.
+
+Brug:
+    from build_pptx import Deck
+    deck = Deck()
+    deck.title("Årsrapport 2026", lead="…")
+    deck.section("Årets resultater", num="01")
+    deck.content("Tre fokusområder", ["…", "…"])
+    deck.save("mit-deck.pptx", preview_dir="preview")   # preview_dir er valgfri
+
+Mangler der en slide-type: brug deck.content("Titel") og tegn selv fra
+CONTENT_TOP med byggeklodserne (card, block, chip, square_list, sticky,
+s.rect/s.line/s.text/s.media) — eller tilføj en ny metode her i samme stil.
 """
-
-from pptx import Presentation
-from pptx.util import Inches, Cm, Pt, Emu
-from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
-import copy
+import math
 import os
-import sys
+
+import oes_pptx as O
+from oes_pptx import (BRAND, CONTENT_BOT, CONTENT_TOP, H, INK, LOGO_INSET, LOGO_W, MEDIA, MEDIA_Y, OFFSET,
+                      PAD_TOP, PAD_X, PAPER, S_BODY, S_CAPTION, S_DISPLAY, S_LEAD, S_QUOTE, S_SMALL,
+                      S_STATEMENT, S_TITLE, W, layout, para, run)
+
+# ------------------------------------------------------------------ TOKENS
+GROUND = "F4F4F2"       # baggrund
+BLACK = "000000"        # kanter, skygger, titelblokke
+LAKS = "ED5E66"         # signal på STORE flader og på sort (kapitel-label, citatstreg)
+LAKS_TEXT = "C93A44"    # laks til tekst på lys grund (4,6:1 — ED5E66 har kun 3:1)
+DIM = "6E6E6E"          # nedtonet tekst, stadig læsbar (4,6:1 på grunden)
+HILITE = "B3E8CA"       # lysegrøn: overstregning, fremhævet række/kort
+RULE = "D6D6D6"         # tynde indre delelinjer
+EMPTY = "E2E2DE"        # billed-pladsholder
+STICKY = "FFF9B1"       # post-it
+BORDER = 3              # kantbredde
+SHADOW = 8              # hård skygge
+GAP = 40                # luft mellem spalter
+
+# Faste mål (px). verify.py holder dem op mod slides.css.
+CONTENT_W = W - 2 * PAD_X        # 1104
+TITLE_Y = PAD_TOP - 8            # titelblokkens top: 64
+TITLE_SIZE = 31                  # tekst i titelblokken
+TITLE_PAD = (19, 12)             # luft i titelblokken (vandret, lodret)
+TITLE_SHADOW = 7                 # titelblokkens grønne skygge
+DISPLAY_PAD = (36, 24)           # luft i de store blokke (forside, kapitel, tak)
+DISPLAY_SHADOW = 12
+SOURCE_BOTTOM = H - LOGO_INSET - 6   # kilde-linjens underkant: 682
+SOURCE_SIZE = 12
 
 
-_ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-OES_LOGO_GREEN = os.path.join(_ASSETS, "oes-logo-green.png")   # til lyse slides
-OES_LOGO_WHITE = os.path.join(_ASSETS, "oes-logo-white.png")   # til grønne sektioner
-
-# ---------------------------------------------------------------- TOKENS
-INK        = RGBColor(0x00, 0x00, 0x00)
-INK_SOFT   = RGBColor(0x33, 0x33, 0x33)
-MUTED      = RGBColor(0x6B, 0x6B, 0x6B)
-CANVAS     = RGBColor(0xF4, 0xF4, 0xF2)
-PAPER      = RGBColor(0xFF, 0xFF, 0xFF)
-ACCENT     = RGBColor(0xFE, 0xF3, 0xC7)   # gul highlight (uændret)
-
-# ØS-farver (fra brandguiden)
-OES_GREEN  = RGBColor(0x06, 0x6B, 0x43)   # identitetsfarve / brand-anker
-OES_LAKS   = RGBColor(0xED, 0x5E, 0x66)   # ØS' koral — systemets signalfarve
-
-BRAND      = OES_GREEN
-RED        = OES_LAKS                     # danger / vigtigt / fald
-SUCCESS    = OES_GREEN                    # positiv / vækst
-LINE_SOFT  = RGBColor(0xE8, 0xE8, 0xE3)
-WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
-
-FONT_SANS  = "IBM Plex Sans"
-FONT_MONO  = "IBM Plex Mono"
-
-# 16:9
-SLIDE_W = Inches(13.333)
-SLIDE_H = Inches(7.5)
-MARGIN  = Inches(0.66)
-
-# ---------------------------------------------------------------- VERTIKAL RYTME
-# Én fast rytme for ALLE slides med overskrift. Overskriften sidder ØVERST, og
-# den grønne accent-bjælke sidder TÆT under den. Tallene er dem Morten selv
-# rettede sine decks til i hånden. Placér aldrig titel eller accent ad hoc.
-TITLE_TOP    = Inches(0.50)             # tekstboksens top (≈1,27 cm)
-TITLE_PT     = 42                       # overskriftens punktstørrelse
-TITLE_H      = Inches(0.80)
-TITLE_W      = SLIDE_W - 2 * MARGIN
-ACCENT_X     = MARGIN + Inches(0.1)     # flugter med titel-tekstens venstrekant
-# 3,26 cm: lige under overskriftens underlængder. Baselinen for en 42pt-titel
-# ligger på 2,92 cm, og et 'g' rækker ~0,34 cm derunder — en bjælke tættere på
-# rammer bogstavernes fødder på overskrifter som "Agenda".
-ACCENT_Y     = Cm(3.26)
-ACCENT_W     = Inches(0.7)
-ACCENT_H     = Pt(6)
-CONTENT_TOP  = Inches(1.70)             # indholdet starter her
-CONTENT_BOT  = Inches(6.60)             # og skal være færdigt her (over logoet)
-CONTENT_MID  = Emu(int((CONTENT_TOP + CONTENT_BOT) / 2))
-
-# Logo: nederst til HØJRE, i hjørnet med ens luft til højre og bund.
-LOGO_W       = Inches(1.55)
-LOGO_INSET   = Inches(0.28)
-
-# Stort tal (bignum): blokken centreres lodret på sliden.
-BIGNUM_TOP   = Inches(1.70)
-
-# Kilde-/note-linje: nederst til venstre, optisk på linje med logoet.
-SOURCE_Y     = Inches(6.85)
-SOURCE_W     = Inches(10.0)     # stopper før logoet
-
-# Forsidens kasse — faste mål (samme i HTML, se .slide--title .frame i slides.css)
-COVER_TOP    = Inches(1.70)
-COVER_W      = Inches(11.0)
-COVER_H      = Inches(4.0)      # med manchet
-COVER_H_SHORT = Inches(3.6)     # kun overskrift — kassen skal ikke stå halvtom
+# ------------------------------------------------------------------ TEKST-ROLLER
+def mono(text, size=S_CAPTION, color=INK, caps=True):
+    """Mono-label: altid versaler med sporing ('mono er system')."""
+    return run(text, f="label", size=size, color=color, caps=caps, sp=0.06 if caps else 0)
 
 
-# ---------------------------------------------------------------- FONT-INDLEJRING
-# PowerPoint refererer fonte ved NAVN. Er IBM Plex ikke installeret på maskinen
-# der åbner filen, erstattes den lydløst (typisk med Calibri), og hele reglen
-# "mono = system, sans = indhold" forsvinder — mens kanter, skygger og farver
-# stadig ser rigtige ud, så man ikke opdager det.
-#
-# Løsningen er at indlejre fonten i selve .pptx-filen: så rejser typografien med
-# decket, uanset om modtageren (eller en låst VDI) har fonten installeret.
-# IBM Plex er OFL-licenseret, og OFL tillader indlejring. Licensen ligger i
-# assets/fonts/LICENSE.txt og SKAL følge med ved videredistribution.
-#
-# Filerne er "complete/ttf"-varianterne fra github.com/IBM/plex (tag v6.4.0).
-# De fire vejer ca. 700 KB tilsammen og lægger ca. en halv MB til hver .pptx.
-
-_FONTS_DIR = os.path.join(_ASSETS, "fonts")
-
-# typeface -> {slot: filnavn}. Slots er PowerPoints egne: regular/bold/italic/
-# boldItalic. Vi bruger kun de to første — systemet sætter aldrig kursiv.
-EMBED_FONTS = (
-    (FONT_SANS, 34, (("regular", "IBMPlexSans-Regular.ttf"),
-                     ("bold", "IBMPlexSans-Bold.ttf"))),
-    (FONT_MONO, 49, (("regular", "IBMPlexMono-Regular.ttf"),
-                     ("bold", "IBMPlexMono-Bold.ttf"))),
-)
+def num(text, size=S_BODY, color=INK, bold=True):
+    """Tal: mono, ikke versaler. bold=False til tabelceller."""
+    return run(text, f="label" if bold else "mono", size=size, color=color)
 
 
-def _panose(blob):
-    """Læs PANOSE-klassifikationen ud af en TTF's OS/2-tabel (20 hex-tegn).
-
-    PowerPoint bruger den til at vælge en fornuftig erstatning hvis indlejringen
-    af en eller anden grund ikke kan bruges. Kan den ikke læses, udelades den."""
-    import struct
-    try:
-        if struct.unpack(">I", blob[:4])[0] != 0x00010000:
-            return None
-        num = struct.unpack(">H", blob[4:6])[0]
-        for i in range(num):
-            off = 12 + i * 16
-            tag = blob[off:off + 4]
-            if tag == b"OS/2":
-                t_off = struct.unpack(">I", blob[off + 8:off + 12])[0]
-                return blob[t_off + 32:t_off + 42].hex().upper()
-    except Exception:
-        pass
-    return None
+def head(text, size=S_TITLE, color=PAPER):
+    """Overskrift: fed IBM Plex Sans i normal case."""
+    return run(text, f="head", size=size, color=color)
 
 
-def _embed_fonts(prs):
-    """Indlejr fontfilerne i præsentationen. Returnerer antal indlejrede snit.
-
-    Skriver p:embeddedFontLst i presentation.xml (skal ligge efter p:notesSz
-    ifølge skemaet) og hænger én /ppt/fonts/fontN.fntdata-del på pr. snit.
-    python-pptx kender allerede fntdata-endelsen, så [Content_Types].xml
-    får sin Default-linje af sig selv."""
-    from pptx.opc.constants import CONTENT_TYPE as _CT
-    from pptx.opc.constants import RELATIONSHIP_TYPE as _RT
-    from pptx.opc.package import Part as _Part
-    from pptx.opc.packuri import PackURI as _PackURI
-
-    pres_part = prs.part
-    root = pres_part._element
-    for old in root.findall(qn("p:embeddedFontLst")):    # idempotent
-        root.remove(old)
-
-    lst = root.makeelement(qn("p:embeddedFontLst"), {})
-    n = added = 0
-    for typeface, pitch, slots in EMBED_FONTS:
-        entry = None
-        for slot, filename in slots:
-            path = os.path.join(_FONTS_DIR, filename)
-            if not os.path.exists(path):
-                continue
-            with open(path, "rb") as fh:
-                blob = fh.read()
-            n += 1
-            part = _Part(_PackURI("/ppt/fonts/font%d.fntdata" % n),
-                         _CT.X_FONTDATA, pres_part.package, blob)
-            rId = pres_part.relate_to(part, _RT.FONT)
-            if entry is None:
-                entry = lst.makeelement(qn("p:embeddedFont"), {})
-                fel = entry.makeelement(qn("p:font"), {
-                    "typeface": typeface,
-                    "pitchFamily": str(pitch),
-                    "charset": "0",
-                })
-                pan = _panose(blob)
-                if pan:
-                    fel.set("panose", pan)
-                entry.append(fel)
-                lst.append(entry)
-            sl = entry.makeelement(qn("p:" + slot), {})
-            sl.set(qn("r:id"), rId)
-            entry.append(sl)
-            added += 1
-
-    if not added:
-        return 0
-    notes_sz = root.find(qn("p:notesSz"))
-    if notes_sz is not None:
-        notes_sz.addnext(lst)
-    else:
-        root.append(lst)
-    return added
+def body(text, size=S_BODY, color=INK, bold=False, hl=None):
+    return run(text, size=size, color=color, bold=bold, hl=hl)
 
 
-# ---------------------------------------------------------------- FONT-TJEK
-def _installed_font_files():
-    """Filnavne på installerede fonte — Windows, macOS og Linux."""
-    dirs = []
-    home = os.path.expanduser("~")
-    win = os.environ.get("WINDIR", r"C:\Windows")
-    local = os.environ.get("LOCALAPPDATA", "")
-    dirs += [os.path.join(win, "Fonts")]
-    if local:
-        dirs.append(os.path.join(local, "Microsoft", "Windows", "Fonts"))
-    dirs += ["/Library/Fonts", "/System/Library/Fonts",
-             os.path.join(home, "Library", "Fonts"),
-             "/usr/share/fonts", "/usr/local/share/fonts",
-             os.path.join(home, ".local", "share", "fonts"),
-             os.path.join(home, ".fonts")]
-    names = []
-    for d in dirs:
-        try:
-            for root, _dirs, files in os.walk(d):
-                names.extend(f.lower() for f in files)
-        except Exception:
-            continue
-    return names
+def rich(item, size=S_BODY, color=INK):
+    """Gør 'tekst', ('Fed start: ', 'resten') eller en liste af run() til en liste af run()."""
+    if isinstance(item, str):
+        return [body(item, size, color)]
+    if isinstance(item, tuple):
+        return [body(item[0], size, color, bold=True)] + [body(t, size, color) for t in item[1:]]
+    return list(item)
 
 
-_FONT_WARNED = False
+def highlight(text, part, size=S_BODY, color=INK):
+    """Tekst hvor delstrengen `part` får lysegrøn overstregning."""
+    if not part or part not in text:
+        return [body(text, size, color)]
+    a, b = text.split(part, 1)
+    return [r for r in (body(a, size, color), body(part, size, color, hl=HILITE), body(b, size, color))
+            if r["text"]]
 
 
-def _warn_if_fonts_missing():
-    """Advar hvis IBM Plex ikke er installeret.
-
-    PowerPoint refererer fonte ved NAVN. Mangler IBM Plex på maskinen,
-    erstatter PowerPoint den lydløst (typisk med Calibri) — kanter, skygger og
-    farver ser stadig rigtige ud, så man opdager det ikke. Men hele reglen
-    "mono = system, sans = indhold" forsvinder. Derfor denne advarsel."""
-    global _FONT_WARNED
-    if _FONT_WARNED:
-        return
-    _FONT_WARNED = True
-    try:
-        files = _installed_font_files()
-    except Exception:
-        return
-    if not files:
-        return                      # kunne ikke læse font-mapperne — ti stille
-    flat = [f.replace("-", "").replace("_", "").replace(" ", "") for f in files]
-    missing = [name for name, key in (("IBM Plex Sans", "ibmplexsans"),
-                                      ("IBM Plex Mono", "ibmplexmono"))
-               if not any(key in f for f in flat)]
-    if not missing:
-        return
-    sys.stderr.write(
-        "\n  ADVARSEL: %s er ikke installeret paa denne maskine.\n"
-        "  PowerPoint erstatter fonten lydloest (typisk Calibri), og decket\n"
-        "  mister mono/sans-forskellen der baerer designsystemet.\n"
-        "  Hent IBM Plex Sans + Mono (gratis, OFL): "
-        "https://github.com/IBM/plex/releases\n"
-        "  Marker .ttf-filerne -> hoejreklik -> Installer for mig (kraever ikke admin).\n\n"
-        % " og ".join(missing))
-
-# ---------------------------------------------------------------- LOW-LEVEL HELPERS
-def _solid(shape, color):
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = color
+def fit_size(text, maker, size, max_w, floor=20, step=2):
+    """Skrump `size` til teksten kan stå på én linje i max_w."""
+    while size > floor and O._measure(text, maker(text, size)) > max_w:
+        size -= step
+    return size
 
 
-def _no_fill(shape):
-    shape.fill.background()
+# ------------------------------------------------------------------ BYGGEKLODSER
+def card(s, x, y, w, h, fill=PAPER, shadow=BLACK, border=BLACK, off=SHADOW, name="Kort"):
+    """Boks med sort kant og hård skygge."""
+    if shadow:
+        s.rect(x + off, y + off, w, h, fill=shadow, name=name + ", skygge")
+    s.rect(x, y, w, h, fill=fill, line=border, lw=BORDER if border else 1, name=name)
 
 
-def _border(shape, color=INK, width_pt=2.0):
-    ln = shape.line
-    ln.color.rgb = color
-    ln.width = Pt(width_pt)
+def block(s, x, y, paras, max_w, fill=BLACK, shadow=BRAND, off=SHADOW, pad=(22, 14), title=False,
+          name="Titelblok", measure_only=False):
+    """Tekst i en farvet blok, der slutter tæt om teksten. Returnerer (bredde, højde) inkl. skygge."""
+    px_, py_ = pad
+    lines, th = layout(paras, max_w - 2 * px_)
+    widest = max((sum(t[2] for t in ln) for _, ls, _, _ in lines for ln in ls), default=0)
+    w, h = widest + 2 * px_ + 2, th + 2 * py_
+    if not measure_only:
+        if shadow:
+            s.rect(x + off, y + off, w, h, fill=shadow, name=name + ", skygge")
+        s.rect(x, y, w, h, fill=fill, name=name)
+        s.text(x + px_, y + py_, w - 2 * px_, th + 2, paras, title=title)
+    return w + (off if shadow else 0), h + (off if shadow else 0)
 
 
-def _no_border(shape):
-    shape.line.fill.background()
+def chip(s, x, y, text, fill=BLACK, color=PAPER, shadow=None, size=13):
+    """Lille label med mono-tekst."""
+    return block(s, x, y, [para(mono(text, size, color), lh=1.3)], 900, fill=fill, shadow=shadow, off=4,
+                 pad=(10, 5), name="Label")
 
 
-def _offset_shadow(shape, color=INK, dist_pt=5):
-    """Hård offset-shadow (ingen blur) injiceret via DrawingML XML.
-
-    PowerPoint kan ikke lave 0-blur offset-shadow gennem python-pptx' API,
-    så vi tilføjer <a:outerShdw> direkte. dir 2700000 = 45° (ned-højre)."""
-    spPr = shape._element.spPr
-    # Fjern evt. eksisterende effektliste
-    for tag in ("a:effectLst",):
-        existing = spPr.find(qn(tag))
-        if existing is not None:
-            spPr.remove(existing)
-    effLst = spPr.makeelement(qn("a:effectLst"), {})
-    shdw = effLst.makeelement(qn("a:outerShdw"), {
-        "blurRad": "0",
-        "dist": str(int(Pt(dist_pt))),
-        "dir": "2700000",        # 45 grader = ned mod højre
-        "rotWithShape": "0",
-    })
-    clr = shdw.makeelement(qn("a:srgbClr"), {"val": "%02X%02X%02X" % (color[0], color[1], color[2])})
-    shdw.append(clr)
-    effLst.append(shdw)
-    spPr.append(effLst)
+def chip_w(text, size=13):
+    """Bredden af en chip (til centrering)."""
+    return O._measure(text, mono(text, size, PAPER)) + 22
 
 
-def _txt(tf, text, *, font=FONT_SANS, size=22, bold=False, color=INK_SOFT,
-         align=PP_ALIGN.LEFT, mono_label=False, line_pct=None):
-    """Sæt tekst på en text_frame's første paragraph."""
-    p = tf.paragraphs[0]
-    p.alignment = align
-    if mono_label:
-        text = text.upper()
-    run = p.add_run()
-    run.text = text
-    f = run.font
-    f.name = FONT_MONO if mono_label else font
-    f.size = Pt(size)
-    f.bold = bold
-    f.color.rgb = color
-    if mono_label:
-        _letter_spacing(run, 1.2)   # ~0.1em ved 11-16pt
-    if line_pct:
-        _line_spacing(p, line_pct)
-    return p
+def square_list(s, x, y, w, items, gap=18, lh=1.4, size=S_BODY, accent_index=None):
+    """Liste med små sorte firkanter (aldrig runde prikker). Returnerer y efter listen."""
+    for i, it in enumerate(items):
+        ps = [para(*rich(it, size), lh=lh)]
+        _, th = layout(ps, w - 30)
+        s.rect(x, y + size * lh / 2 - 6, 11, 11, fill=LAKS if i == accent_index else BLACK, name="Firkant")
+        s.text(x + 30, y, w - 30, th + 2, ps)
+        y += th + gap
+    return y - gap if items else y
 
 
-def _letter_spacing(run, pt):
-    """Letter-spacing i punkter (DrawingML 'spc' i 1/100 pt)."""
-    rPr = run._r.get_or_add_rPr()
-    rPr.set("spc", str(int(pt * 100)))
+def list_height(w, items, gap=18, lh=1.4, size=S_BODY):
+    return sum(layout([para(*rich(it, size), lh=lh)], w - 30)[1] for it in items) + gap * max(len(items) - 1, 0)
 
 
-def _line_spacing(paragraph, pct):
-    paragraph.line_spacing = pct
+def sticky(s, x, y, size_px, text, text_size=S_LEAD, off=6):
+    """Post-it med sort kant og hård skygge. text: str, tuple eller liste af run()."""
+    card(s, x, y, size_px, size_px, fill=STICKY, off=off, name="Post-it")
+    inset = size_px * 0.09
+    s.text(x + inset, y + inset, size_px - 2 * inset, size_px - 2 * inset,
+           [para(*rich(text, text_size), align="ctr", lh=1.25)], anchor="ctr")
 
 
-def _fill(shape, blocks, anchor=MSO_ANCHOR.TOP,
-          ml=0.55, mr=0.55, mt=0.5, mb=0.5):
-    """Læg flere tekst-afsnit ind i en forms egen text_frame med marginer.
-
-    Tekst flyder naturligt og kan hverken overlappe eller ramme kanten.
-    blocks: liste af dict {text, size, bold, color, font, mono, align, line,
-                           before(pt), after(pt), spc}."""
-    tf = shape.text_frame
-    tf.word_wrap = True
-    tf.vertical_anchor = anchor
-    tf.margin_left = Inches(ml); tf.margin_right = Inches(mr)
-    tf.margin_top = Inches(mt); tf.margin_bottom = Inches(mb)
-    for i, b in enumerate(blocks):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.alignment = b.get("align", PP_ALIGN.LEFT)
-        if b.get("line"): p.line_spacing = b["line"]
-        if b.get("before") is not None: p.space_before = Pt(b["before"])
-        if b.get("after") is not None: p.space_after = Pt(b["after"])
-        run = p.add_run()
-        mono = b.get("mono", False)
-        run.text = b["text"].upper() if mono else b["text"]
-        f = run.font
-        f.name = FONT_MONO if mono else b.get("font", FONT_SANS)
-        f.size = Pt(b["size"]); f.bold = b.get("bold", False)
-        f.color.rgb = b.get("color", INK_SOFT)
-        if mono:
-            _letter_spacing(run, b.get("spc", 1.2))
+def picture(s, image, x, y, w, h, side=None, focus=(0.5, 0.5), alt="", label="Billede", fit="cover"):
+    """Billede — eller en pladsholder hvis image er None. side='right'/'left' giver den
+    grønne flade forskudt bagved (systemets signatur)."""
+    if side:
+        dx = OFFSET if side == "right" else -OFFSET
+        s.rect(x + dx, y + OFFSET, w, h, fill=BRAND, name="Grøn flade")
+    if image:
+        return s.image(image, x, y, w, h, fit=fit, focus=focus, alt=alt)
+    s.rect(x, y, w, h, fill=EMPTY, name="Billed-pladsholder")
+    if label:
+        s.text(x, y, w, h, [para(mono(label, 13, "555555"), align="ctr", lh=1.3)], anchor="ctr")
 
 
-# ---------------------------------------------------------------- DECK
-class Deck:
-    """Ét ØS-deck. Der er ingen stilarter at vælge imellem.
+# ------------------------------------------------------------------ DECK
+class Deck(O.Deck):
+    """Alle slide-typer. Hver metode returnerer sliden, så du kan tegne videre på den."""
 
-    ``theme=`` tages stadig imod, men ignoreres — den findes kun så gamle
-    deck-scripts med ``Deck(theme="oes")`` ikke går i stykker."""
-
-    def __init__(self, deck_title="Økonomistyrelsen", footer=None,
-                 logo_path=None, embed_fonts=True, theme=None):
-        self.prs = Presentation()
-        self.prs.slide_width = SLIDE_W
-        self.prs.slide_height = SLIDE_H
-        self.blank = self.prs.slide_layouts[6]   # tom layout
+    def __init__(self, deck_title=None, embed_fonts=True, **_ignored):
+        super().__init__()
         self.deck_title = deck_title
-        self.footer = footer or deck_title
-        self._n = 0
-        self.signal = RED                        # Laks
-        self.success = SUCCESS                   # ØS-grøn
-        self.brand = BRAND                       # ØS-grøn
-        self.cta_bg = BRAND
-        self.embed_fonts = embed_fonts           # læg IBM Plex ind i filen
-        self.logo_path = logo_path               # override, valgfri
-        self.logo_light = OES_LOGO_GREEN         # grøn logo på lyse slides
-        self.logo_dark = OES_LOGO_WHITE          # hvid logo på grøn/sort flade
+        self.embed_fonts = embed_fonts
+        self.part = None          # "01", "02" … sættes af section() og vises i titelblokken
+        self.warnings = []
 
-    # --- intern: nyt blankt slide med valgfri baggrund ---
-    def _new(self, bg=CANVAS):
-        self._n += 1
-        slide = self.prs.slides.add_slide(self.blank)
-        rect = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_W, SLIDE_H)
-        _solid(rect, bg)
-        _no_border(rect)
-        rect.shadow.inherit = False
-        # 3px sort yderramme
-        frame = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_W, SLIDE_H)
-        _no_fill(frame)
-        _border(frame, INK, 3.0)
-        frame.shadow.inherit = False
-        return slide
+    # ---------- fælles
+    def blank(self, bg=GROUND, logo="green"):
+        return super().blank(bg=bg, logo=logo)
 
-    def _box(self, slide, l, t, w, h):
-        tb = slide.shapes.add_textbox(l, t, w, h)
-        tb.text_frame.word_wrap = True
-        return tb
+    def _title(self, s, text):
+        """Overskriften: sort skilt med grøn skygge; delnummeret i laks mono foran."""
+        runs = []
+        if self.part:
+            runs += [mono(self.part, TITLE_SIZE * 0.8, LAKS), run("  ", size=TITLE_SIZE, color=PAPER)]
+        runs.append(head(text, TITLE_SIZE))
+        block(s, PAD_X, TITLE_Y, [para(*runs, lh=1.2)], CONTENT_W, title=True, off=TITLE_SHADOW,
+              pad=TITLE_PAD)
 
-    def _logo_path_for(self, dark):
-        """Vælg logo-fil: brugerens override, ellers tema-logo (hvid på mørk/grøn)."""
-        if self.logo_path:
-            return self.logo_path
-        if dark and self.logo_dark and os.path.exists(self.logo_dark):
-            return self.logo_dark
-        if (not dark) and self.logo_light and os.path.exists(self.logo_light):
-            return self.logo_light
-        return None
+    def _source(self, s, text):
+        """Kilde-/note-linje nederst til venstre (mono, ikke versaler — den skal kunne læses)."""
+        if text:
+            s.text(PAD_X, SOURCE_BOTTOM - 18, 900, 18, [para(mono(text, SOURCE_SIZE, DIM, caps=False), lh=1.3)],
+                   anchor="b", name="Kilde")
 
-    def _footer(self, slide, dark=False):
-        """Officielt ØS-logo nederst til HØJRE, i hjørnet.
+    def _display(self, s, text, y=None, label=None, below=None, max_w=1060):
+        """Stor sort blok med grøn skygge, lodret centreret (forside, kapitel, tak)."""
+        size = S_DISPLAY
+        t_paras = [para(head(text, size), lh=1.05)]
+        _, t_h = block(s, 0, 0, t_paras, max_w, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, measure_only=True)
+        l_h = 52 if label else 0
+        b_h = (layout(below, 760)[1] + 32) if below else 0
+        if y is None:
+            y = (H - (l_h + t_h + b_h)) / 2 - 10
+        if label:
+            block(s, PAD_X, y, [para(head(label, 26), lh=1.2)], 600, fill=LAKS, shadow=BLACK, pad=(20, 8),
+                  name="Kapitel-label")
+            y += l_h
+        block(s, PAD_X, y, t_paras, max_w, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, title=True)
+        if below:
+            s.text(PAD_X, y + t_h + 32, 760, b_h, below)
+        return s
 
-        Ens luft til højre og bund (LOGO_INSET). Intet side-nummer og ingen
-        deck-titel — logoet bærer navnet."""
-        logo = self._logo_path_for(dark)
-        if not logo:
-            return
-        from PIL import Image as _PILImage
-        try:
-            iw, ih = _PILImage.open(logo).size
-            lh = Emu(int(LOGO_W * ih / iw))
-        except Exception:
-            lh = Inches(0.42)
-        slide.shapes.add_picture(logo,
-                                 SLIDE_W - LOGO_INSET - LOGO_W,
-                                 SLIDE_H - LOGO_INSET - lh,
-                                 width=LOGO_W, height=lh)
+    def _meta(self, s, text):
+        if text:
+            s.text(PAD_X, SOURCE_BOTTOM - 20, 800, 20, [para(mono(text, 13, DIM), lh=1.3)], anchor="b",
+                   name="Meta")
 
-    def _accent(self, slide):
-        """Den grønne accent-bjælke — hører til overskriften.
+    # ---------- åbning, kapitler, afslutning
+    def title(self, title, lead=None, kicker=None, meta=None, image=None, eyebrow=None, focus=(0.5, 0.5),
+              alt=""):
+        """Forside. Med image: tekst til venstre, billede med grøn flade til højre.
+        Uden: stor sort titelblok. meta = mono-linje nederst (dato / anledning / afsender)."""
+        if image:
+            return self.hero(title, image, eyebrow=eyebrow, lead=lead, meta=meta, focus=focus, alt=alt)
+        s = self.blank()
+        self._display(s, title, below=[para(body(lead, S_LEAD), lh=1.45)] if lead else None)
+        self._meta(s, meta)
+        return s
 
-        Fast ACCENT_Y lige under titlen, flugter med titel-tekstens
-        venstrekant. Den må ALDRIG rykkes længere ned, hvor den kommer til at
-        svæve mellem overskrift og indhold."""
-        bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
-                                     ACCENT_X, ACCENT_Y, ACCENT_W, ACCENT_H)
-        _solid(bar, self.brand); _no_border(bar); bar.shadow.inherit = False
+    def section(self, title, num=None, variant=None, label=None):
+        """Kapitel: laks-label + stor sort titelblok. num='01' giver labelen 'Del 1' og sætter
+        nummeret foran titlerne på de efterfølgende slides."""
+        digits = "".join(ch for ch in str(num or label or "") if ch.isdigit())
+        self.part = digits.zfill(2) if digits else None
+        if label is None and digits:
+            label = "Del %d" % int(digits)
+        return self._display(self.blank(), title, label=label)
 
-    def _source(self, slide, text):
-        """Kilde-/note-linje nederst til venstre ("Kilde: Statens Regnskab, 2026").
-
-        Fast SOURCE_Y, så den står ens på alle slide-typer og optisk flugter
-        med logoet i modsatte hjørne. Mono = system/metadata, derfor uppercase."""
-        if not text:
-            return
-        tb = self._box(slide, MARGIN, SOURCE_Y, SOURCE_W, Inches(0.35))
-        _txt(tb.text_frame, text, font=FONT_MONO, size=13, bold=True,
-             color=MUTED, mono_label=True)
-        return tb
-
-    def _title(self, slide, title, size=TITLE_PT):
-        """Slide-overskrift øverst + den grønne accent lige under."""
-        t = self._box(slide, MARGIN, TITLE_TOP, TITLE_W, TITLE_H)
-        _txt(t.text_frame, title, size=size, bold=True, color=INK, line_pct=1.05)
-        self._accent(slide)
-        return t
-
-    # ============================================================ SLIDE-TYPER
-
-    def title(self, title, lead=None, kicker=None, meta=None):
-        """Åbnings-slide: hvid kasse med grøn offset-shadow.
-
-        meta=  valgfri mono-linje UNDER kassen (dato / anledning / afsender).
-        kicker= ignoreres (kun ÉN overskrift pr. slide).
-
-        Kassen er 11.0" bred og 4.0" høj — 3.6" når der ikke er nogen manchet,
-        så den ikke står halvtom. Målene er referencedeckenes."""
-        slide = self._new(CANVAS)
-        # hvidt frame med stor shadow — teksten flyder inde i rammen
-        box_h = COVER_H if lead else COVER_H_SHORT
-        fr = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, COVER_TOP,
-                                    COVER_W, box_h)
-        _solid(fr, PAPER)
-        _border(fr, INK, 3.0)
-        fr.shadow.inherit = False
-        # Grøn offset-shadow på titel-rammen (ikke en grøn topkant)
-        _offset_shadow(fr, self.brand, dist_pt=8)
-        blocks = [dict(text=title, size=58, bold=True, color=INK, line=1.02, after=20)]
-        if lead:
-            blocks.append(dict(text=lead, size=22, color=INK_SOFT, line=1.25))
-        _fill(fr, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.6, mr=0.6, mt=0.55, mb=0.55)
-        if meta:
-            mb_ = self._box(slide, MARGIN, COVER_TOP + box_h + Inches(0.38),
-                            Inches(8), Inches(0.4))
-            _txt(mb_.text_frame, meta, font=FONT_MONO, size=13, bold=True,
-                 color=MUTED, mono_label=True)
-        self._footer(slide)
-        return slide
-
-    def section(self, title, num=None, variant=None):
-        """Kapitel-divider. Standard = ØS-grøn fuldflade med hvidt logo."""
-        variant = variant or "brand"
-        bg = {"dark": INK, "brand": self.brand, "yellow": ACCENT}.get(variant, CANVAS)
-        slide = self._new(bg)
-        dark = variant in ("dark", "brand")
-        txt_col = WHITE if dark else INK
-        if num:
-            nb = self._box(slide, MARGIN, Inches(2.3), Inches(4), Inches(0.6))
-            _txt(nb.text_frame, num, font=FONT_MONO, size=26, bold=True, color=txt_col, mono_label=True)
-        tb = self._box(slide, MARGIN, Inches(3.0), Inches(11.5), Inches(2.2))
-        _txt(tb.text_frame, title, size=72, bold=True, color=txt_col, line_pct=1.0)
-        self._footer(slide, dark=dark)
-        return slide
-
-    def content(self, title, bullets, kicker=None, accent_index=None):
-        """bullets: liste af str. accent_index: index på bullet med rød markør."""
-        slide = self._new(CANVAS)
-        self._title(slide, title)
-        # bullets
-        top = CONTENT_TOP
-        for i, b in enumerate(bullets):
-            sq_color = self.signal if i == accent_index else INK
-            sq = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, top + Pt(6),
-                                        Pt(11), Pt(11))
-            _solid(sq, sq_color)
-            _no_border(sq)
-            sq.shadow.inherit = False
-            tb = self._box(slide, MARGIN + Inches(0.45), top, Inches(10.5), Inches(0.7))
-            _txt(tb.text_frame, b, size=22, color=INK_SOFT, line_pct=1.15)
-            top += Inches(0.72)
-        self._footer(slide)
-        return slide
-
-    def split(self, title, left, right, kicker=None):
-        """left/right: dict {'label': str, 'body': str}."""
-        slide = self._new(CANVAS)
-        self._title(slide, title)
-        colw = Inches(5.3)
-        # divider
-        dv = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(6.6), CONTENT_TOP,
-                                    Pt(1), CONTENT_BOT - CONTENT_TOP)
-        _solid(dv, LINE_SOFT); _no_border(dv); dv.shadow.inherit = False
-        for col, x in ((left, MARGIN), (right, Inches(7.0))):
-            lb = self._box(slide, x, CONTENT_TOP, colw, Inches(0.4))
-            _txt(lb.text_frame, col["label"], font=FONT_MONO, size=13, bold=True,
-                 color=MUTED, mono_label=True)
-            bd = self._box(slide, x, CONTENT_TOP + Inches(0.5), colw, Inches(4.4))
-            _txt(bd.text_frame, col["body"], size=22, color=INK_SOFT, line_pct=1.3)
-        self._footer(slide)
-        return slide
-
-    def statement(self, quote, attribution=None, source=None):
-        """Ét stort citat med laks venstre-kant.
-
-        attribution= er citatets afsender ("— Økonomistyrelsen") og står lige
-        under citatet. Det er IKKE det samme som source= på tal-slides, der er
-        en datakilde nederst på sliden — source= her er kun et gammelt alias."""
-        attribution = attribution or source
-        slide = self._new(CANVAS)
-        # signal-farvet venstre-kant
-        bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, Inches(2.4),
-                                     Pt(6), Inches(2.6))
-        _solid(bar, self.signal); _no_border(bar); bar.shadow.inherit = False
-        q = self._box(slide, MARGIN + Inches(0.4), Inches(2.4), Inches(10.5), Inches(2.6))
-        q.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-        _txt(q.text_frame, quote, size=44, bold=True, color=INK, line_pct=1.1)
-        if attribution:
-            s = self._box(slide, MARGIN + Inches(0.4), Inches(5.1), Inches(10), Inches(0.5))
-            _txt(s.text_frame, attribution, font=FONT_MONO, size=15, bold=True,
-                 color=MUTED, mono_label=True)
-        self._footer(slide)
-        return slide
-
-    def stats(self, cards, title=None, kicker=None, primary_index=None,
-              source=None):
-        """cards: liste af dict {'num': str, 'label': str, 'trend': 'up'|'down'|None}.
-        primary_index: index på det fremhævede kort (gul flade + laks shadow).
-        source: kilde-/note-linje nederst til venstre."""
-        slide = self._new(CANVAS)
-        if title:
-            self._title(slide, title)
-        n = len(cards)
-        gap = Inches(0.4)
-        total_w = SLIDE_W - 2 * MARGIN
-        cw = Emu(int((total_w - gap * (n - 1)) / n))
-        ch = Inches(2.6)
-        # kortene centreres i indholdsbåndet — ikke skubbet ned mod bunden
-        top = Emu(int(CONTENT_MID - ch / 2)) if title else Emu(int(SLIDE_H / 2 - ch / 2))
-        for i, c in enumerate(cards):
-            x = Emu(int(MARGIN + i * (cw + gap)))
-            primary = i == primary_index
-            card = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, cw, ch)
-            _solid(card, ACCENT if primary else PAPER)
-            _border(card, INK, 2.0)
-            card.shadow.inherit = False
-            _offset_shadow(card, self.signal if primary else INK, dist_pt=5)
-            # tal
-            num_col = INK
-            if c.get("trend") == "up": num_col = self.success
-            if c.get("trend") == "down": num_col = self.signal
-            nb = self._box(slide, x + Inches(0.3), top + Inches(0.35),
-                           Emu(int(cw - Inches(0.6))), Inches(1.3))
-            # Auto-skrump: lange værdier ("1,2 mio") krymper til at passe i kortet
-            # uanset skrifttype, i stedet for at ombryde/flyde over.
-            nb.text_frame.word_wrap = False
-            nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
-            _txt(nb.text_frame, c["num"], font=FONT_MONO, size=60, bold=True, color=num_col)
-            lb = self._box(slide, x + Inches(0.3), top + Inches(1.75),
-                           Emu(int(cw - Inches(0.6))), Inches(0.7))
-            _txt(lb.text_frame, c["label"], font=FONT_MONO, size=13, bold=True,
-                 color=MUTED, mono_label=True, line_pct=1.1)
-        self._source(slide, source)
-        self._footer(slide)
-        return slide
-
-    def table(self, headers, rows, title=None, kicker=None,
-              numeric_cols=(), highlight_row=None, source=None):
-        """headers: list[str]. rows: list[list[str]]. numeric_cols: indices højrejusteret+mono.
-        source: kilde-/note-linje nederst til venstre."""
-        slide = self._new(CANVAS)
-        if title:
-            self._title(slide, title)
-        ncols = len(headers)
-        nrows = len(rows) + 1
-        tbl_w = SLIDE_W - 2 * MARGIN
-        gtbl = slide.shapes.add_table(nrows, ncols, MARGIN, CONTENT_TOP,
-                                      tbl_w, Inches(0.6 * nrows)).table
-        # disable PPT auto-styling
-        tbl_el = gtbl._tbl
-        for el in tbl_el.findall(qn('a:tblPr')):
-            el.set('firstRow', '0'); el.set('bandRow', '0')
-        # header
-        for c, h in enumerate(headers):
-            cell = gtbl.cell(0, c)
-            _solid(cell, INK)
-            cell.margin_left = Inches(0.18); cell.margin_top = Inches(0.08)
-            _txt(cell.text_frame, h, font=FONT_MONO, size=12, bold=True, color=WHITE,
-                 mono_label=True,
-                 align=PP_ALIGN.RIGHT if c in numeric_cols else PP_ALIGN.LEFT)
-        # body
-        for r, row in enumerate(rows, start=1):
-            hl = (r - 1) == highlight_row
-            for c, val in enumerate(row):
-                cell = gtbl.cell(r, c)
-                _solid(cell, ACCENT if hl else PAPER)
-                cell.margin_left = Inches(0.18); cell.margin_top = Inches(0.06)
-                is_num = c in numeric_cols
-                _txt(cell.text_frame, val,
-                     font=FONT_MONO if is_num else FONT_SANS,
-                     size=16, color=INK_SOFT,
-                     align=PP_ALIGN.RIGHT if is_num else PP_ALIGN.LEFT)
-        self._source(slide, source)
-        self._footer(slide)
-        return slide
-
-    def closing(self, title, cta=None, kicker=None):
-        """Afslutning. kicker= ignoreres (kun ÉN overskrift pr. slide)."""
-        slide = self._new(CANVAS)
-        t = self._box(slide, MARGIN, Inches(2.5), TITLE_W, Inches(1.6))
-        _txt(t.text_frame, title, size=66, bold=True, color=INK)
+    def closing(self, title="Tak", cta=None, kicker=None, lines=None):
+        """Afslutning: stor sort blok + valgfri linjer og en grøn mono-label (cta)."""
+        s = self.blank()
+        below = [para(*rich(ln, S_LEAD), lh=1.45) for ln in (lines or [])]
+        size = S_DISPLAY
+        t_paras = [para(head(title, size), lh=1.05)]
+        _, t_h = block(s, 0, 0, t_paras, 1000, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, measure_only=True)
+        l_h = layout(below, 1000)[1] if below else 0
+        c_h = 46 if cta else 0
+        total = t_h + (32 + l_h if below else 0) + (32 + c_h if cta else 0)
+        y = (H - total) / 2
+        block(s, PAD_X, y, t_paras, 1000, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, title=True)
+        y += t_h
+        if below:
+            s.text(PAD_X, y + 32, 1000, l_h + 2, below)
+            y += 32 + l_h
         if cta:
-            btn = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, MARGIN, Inches(4.5),
-                                         Inches(5), Inches(0.8))
-            try:
-                btn.adjustments[0] = 0.08
-            except Exception:
-                pass
-            _solid(btn, self.cta_bg)
-            _border(btn, self.cta_bg, 2.0)
-            btn.shadow.inherit = False
-            _offset_shadow(btn, self.signal, dist_pt=4)
-            tf = btn.text_frame
-            tf.word_wrap = True
-            _txt(tf, cta, font=FONT_MONO, size=15, bold=True, color=WHITE,
-                 align=PP_ALIGN.CENTER, mono_label=True)
-        self._footer(slide)
-        return slide
+            block(s, PAD_X, y + 32, [para(mono(cta, 15, PAPER, caps=False), lh=1.3)], 900, fill=BRAND, shadow=BLACK, off=5,
+                  pad=(18, 10), name="CTA")
+        return s
 
-    # ============================================================ PRÆSENTATIONS-ELEMENTER
-
-    def _head(self, slide, kicker, title, kicker_default=None):
-        """Fælles slide-hoved. kicker-argumenterne ignoreres — de findes kun
-        så ældre deck-scripts stadig kan kaldes uændret."""
+    # ---------- overskrift + indhold
+    def content(self, title=None, bullets=None, kicker=None, accent_index=None, sub=None):
+        """Overskrift øverst + liste. Uden bullets: tegn selv videre fra CONTENT_TOP.
+        sub = kort forklaring lige under titelblokken."""
+        s = self.blank()
         if title:
-            self._title(slide, title)
-
-    def _img(self, slide, l, t, w, h, label="BILLEDE", path=None):
-        """Billed-felt: ægte billede hvis path, ellers grå placeholder m. mono-label."""
-        if path:
-            slide.shapes.add_picture(path, l, t, w, h)
-            box = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, l, t, w, h)
-            _no_fill(box); _border(box, INK, 2.0); box.shadow.inherit = False
-            return
-        ph = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, l, t, w, h)
-        _solid(ph, LINE_SOFT); _border(ph, INK, 2.0); ph.shadow.inherit = False
-        tf = ph.text_frame; tf.word_wrap = True
-        _txt(tf, label, font=FONT_MONO, size=12, bold=True, color=MUTED,
-             align=PP_ALIGN.CENTER, mono_label=True)
-
-    def cover(self, title, lead=None, kicker=None, image=None):
-        slide = self._new(CANVAS)
-        self._img(slide, 0, 0, SLIDE_W, SLIDE_H, "BAGGRUNDSBILLEDE 16:9", image)
-        # overlay-boks med hård shadow — teksten flyder inde i boksen
-        ov = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, Inches(3.3),
-                                    Inches(9.0), Inches(3.4))
-        _solid(ov, PAPER); _border(ov, INK, 3.0); ov.shadow.inherit = False
-        _offset_shadow(ov, INK, dist_pt=8)
-        blocks = [dict(text=title, size=44, bold=True, color=INK, line=1.04, after=14)]
-        if lead:
-            blocks.append(dict(text=lead, size=18, color=INK_SOFT, line=1.2))
-        _fill(ov, blocks, anchor=MSO_ANCHOR.MIDDLE, ml=0.55, mr=0.55, mt=0.5, mb=0.5)
-        return slide
-
-    def image_full(self, caption=None, label=None, kicker=None, image=None):
-        """Full-bleed billede med sort caption-stribe. Intet logo (ingen plads).
-
-        label= er mono-labelen FORAN captionen i striben ("FOTO"), i laks.
-        Den er en billed-label, ikke en overskrift — derfor er den ikke fjernet
-        som kicker-eyebrows'ene over titler. kicker= er et gammelt alias."""
-        label = label or kicker
-        slide = self._new(CANVAS)
-        self._img(slide, 0, 0, SLIDE_W, SLIDE_H, "FULL-BLEED BILLEDE", image)
-        if caption:
-            strip = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, Inches(6.2),
-                                           Inches(9), Inches(0.7))
-            _solid(strip, INK); _no_border(strip); strip.shadow.inherit = False
-            cap = self._box(slide, Inches(0.3), Inches(6.32), Inches(8.5), Inches(0.5))
-            p = cap.text_frame.paragraphs[0]
-            if label:
-                r1 = p.add_run(); r1.text = label.upper() + "   "
-                r1.font.name = FONT_MONO; r1.font.size = Pt(12); r1.font.bold = True
-                r1.font.color.rgb = self.signal; _letter_spacing(r1, 1.0)
-            r2 = p.add_run(); r2.text = caption
-            r2.font.name = FONT_SANS; r2.font.size = Pt(18); r2.font.color.rgb = WHITE
-        return slide
-
-    def image_text(self, title, bullets, kicker=None, image=None,
-                   image_left=False, accent_index=None):
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        colw = Inches(5.5); top = CONTENT_TOP; ch = CONTENT_BOT - CONTENT_TOP
-        img_x = MARGIN if image_left else Inches(7.13)
-        txt_x = Inches(7.13) if image_left else MARGIN
-        self._img(slide, img_x, top, colw, ch, "BILLEDE", image)
-        by = top
-        for i, b in enumerate(bullets):
-            sq = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, txt_x, by + Pt(6), Pt(11), Pt(11))
-            _solid(sq, self.signal if i == accent_index else INK)
-            _no_border(sq); sq.shadow.inherit = False
-            tb = self._box(slide, txt_x + Inches(0.4), by, Emu(int(colw - Inches(0.4))), Inches(0.9))
-            _txt(tb.text_frame, b, size=20, color=INK_SOFT, line_pct=1.15)
-            by += Inches(0.95)
-        self._footer(slide)
-        return slide
-
-    def image_grid(self, title=None, n=6, cols=3, kicker=None, images=None):
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        images = images or [None] * n
-        gap = Inches(0.25); top = CONTENT_TOP
-        rows = (n + cols - 1) // cols
-        gw = SLIDE_W - 2 * MARGIN
-        cw = Emu(int((gw - gap * (cols - 1)) / cols))
-        gh = CONTENT_BOT - CONTENT_TOP
-        chh = Emu(int((gh - gap * (rows - 1)) / rows))
-        for i in range(n):
-            r, c = divmod(i, cols)
-            x = Emu(int(MARGIN + c * (cw + gap)))
-            y = Emu(int(top + r * (chh + gap)))
-            self._img(slide, x, y, cw, chh, "%02d" % (i + 1), images[i] if i < len(images) else None)
-        self._footer(slide)
-        return slide
+            self._title(s, title)
+        if sub:
+            s.text(PAD_X, PAD_TOP + 82, 520, 70, [para(body(sub), lh=1.4)])
+        if bullets:
+            square_list(s, PAD_X, CONTENT_TOP + (70 if sub else 0), 1060, bullets, gap=24,
+                        accent_index=accent_index)
+        return s
 
     def agenda(self, items, title="Agenda", kicker=None, current=None):
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
+        """Nummereret liste mellem sorte streger. current (0-baseret) fremhæver ét punkt."""
+        s = self.content(title)
+        n = len(items)
+        row = min(99, (CONTENT_BOT - CONTENT_TOP) / max(n, 1))
+        hs = 32 if row >= 90 else 26
         y = CONTENT_TOP
-        for i, it in enumerate(items):
-            is_cur = i == current
-            nb = self._box(slide, MARGIN, y, Inches(1), Inches(0.6))
-            _txt(nb.text_frame, "%02d" % (i + 1), font=FONT_MONO, size=22, bold=True,
-                 color=self.signal if is_cur else MUTED, mono_label=True)
-            tb = self._box(slide, MARGIN + Inches(1.1), y - Inches(0.02), Inches(10), Inches(0.6))
-            _txt(tb.text_frame, it, size=26, bold=is_cur, color=INK)
-            line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGIN, y + Inches(0.7),
-                                          SLIDE_W - 2 * MARGIN, Pt(1))
-            _solid(line, LINE_SOFT); _no_border(line); line.shadow.inherit = False
-            y += Inches(0.95)
-        self._footer(slide)
-        return slide
+        s.rect(PAD_X, y, 900, 3, fill=BLACK, name="Streg")
+        for i, t in enumerate(items):
+            on = current is None or i == current
+            s.text(PAD_X, y + 3, 90, row - 3, [para(num("%02d" % (i + 1), hs * 0.8, LAKS_TEXT if on else DIM),
+                                                   lh=1.2)], anchor="ctr")
+            r = head(t, hs, INK)
+            if current is not None and i == current:
+                r["hl"] = HILITE
+            s.text(PAD_X + 90, y + 3, 800, row - 3, [para(r, lh=1.2)], anchor="ctr")
+            y += row
+            s.rect(PAD_X, y, 900, 1.5, fill=BLACK, name="Streg")
+        return s
+
+    def split(self, title, left, right, kicker=None, arrow=False):
+        """To spalter under hver sin sorte streg. Hver side: {'label', 'head' (valgfri), 'body',
+        'accent' (valgfri: grøn overskrift)}. arrow=True sætter en pil imellem (før → efter)."""
+        s = self.content(title)
+        col = (CONTENT_W - GAP * 2) / 2
+        for i, d in enumerate((left, right)):
+            x = PAD_X + i * (col + GAP * 2)
+            s.rect(x, CONTENT_TOP, col, 3, fill=BLACK, name="Streg")
+            ps = [para(mono(d.get("label", ""), 14, LAKS_TEXT), lh=1.3)]
+            if d.get("head"):
+                ps.append(para(head(d["head"], 34, BRAND if d.get("accent") else INK), lh=1.15, before=10))
+            if d.get("body"):
+                ps.append(para(*rich(d["body"]), lh=1.45, before=14))
+            s.text(x, CONTENT_TOP + 20, col, CONTENT_BOT - CONTENT_TOP - 20, ps)
+        if arrow:
+            s.text(PAD_X + col + 8, CONTENT_TOP + 64, GAP * 2 - 16, 40, [para(head("→", 34, INK), align="ctr",
+                                                                              lh=1.15)])
+        return s
 
     def cards(self, items, title=None, kicker=None, accent_index=None):
-        """items: liste af dict {'title': str, 'body': str}."""
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        n = len(items); gap = Inches(0.35); ch = Inches(3.6)
-        top = Emu(int(CONTENT_MID - ch / 2))     # centreret i indholdsbåndet
-        gw = SLIDE_W - 2 * MARGIN
-        cw = Emu(int((gw - gap * (n - 1)) / n))
+        """2–4 spalter under hver sin sorte streg: mono-nummer, overskrift, tekst.
+        accent_index: den spalte der skal bære ØS-grøn."""
+        s = self.content(title)
+        n = len(items)
+        col = (CONTENT_W - GAP * (n - 1)) / n
         for i, it in enumerate(items):
-            acc = i == accent_index
-            x = Emu(int(MARGIN + i * (cw + gap)))
-            card = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, cw, ch)
-            _solid(card, ACCENT if acc else PAPER); _border(card, INK, 2.0)
-            card.shadow.inherit = False; _offset_shadow(card, INK, dist_pt=3)
-            ic = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x + Inches(0.3), top + Inches(0.3),
-                                        Inches(0.5), Inches(0.5))
-            _solid(ic, self.signal if acc else INK); _no_border(ic); ic.shadow.inherit = False
-            tt = self._box(slide, x + Inches(0.3), top + Inches(1.0), Emu(int(cw - Inches(0.6))), Inches(0.6))
-            _txt(tt.text_frame, it["title"], size=22, bold=True, color=INK)
-            bd = self._box(slide, x + Inches(0.3), top + Inches(1.6), Emu(int(cw - Inches(0.6))), Inches(1.8))
-            _txt(bd.text_frame, it["body"], size=16, color=INK_SOFT, line_pct=1.3)
-        self._footer(slide)
-        return slide
-
-    def timeline(self, steps, title=None, kicker=None, current=None):
-        """steps: liste af dict {'when': str, 'what': str, 'desc': str}."""
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        n = len(steps); top = Emu(int(CONTENT_MID - Inches(1.5)))
-        gw = SLIDE_W - 2 * MARGIN
-        step_w = Emu(int(gw / n))
-        for i, s in enumerate(steps):
-            x = Emu(int(MARGIN + i * step_w))
-            cur = i == current
-            # connector
-            if i < n - 1:
-                ln = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Emu(int(x + Inches(0.24))),
-                                            top + Inches(0.1), Emu(int(step_w - Inches(0.24))), Pt(3))
-                _solid(ln, INK); _no_border(ln); ln.shadow.inherit = False
-            dot = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, Inches(0.26), Inches(0.26))
-            _solid(dot, self.signal if cur else PAPER)
-            _border(dot, self.signal if cur else INK, 3.0); dot.shadow.inherit = False
-            wb = self._box(slide, x, top + Inches(0.45), Emu(int(step_w - Inches(0.2))), Inches(0.4))
-            _txt(wb.text_frame, s["when"], font=FONT_MONO, size=13, bold=True, color=MUTED, mono_label=True)
-            tb = self._box(slide, x, top + Inches(0.85), Emu(int(step_w - Inches(0.2))), Inches(0.5))
-            _txt(tb.text_frame, s["what"], size=18, bold=True, color=INK)
-            db = self._box(slide, x, top + Inches(1.4), Emu(int(step_w - Inches(0.25))), Inches(1.6))
-            _txt(db.text_frame, s.get("desc", ""), size=14, color=INK_SOFT, line_pct=1.25)
-        self._footer(slide)
-        return slide
+            x = PAD_X + i * (col + GAP)
+            on = i == accent_index
+            s.rect(x, CONTENT_TOP, col, 3, fill=BRAND if on else BLACK, name="Streg")
+            s.text(x, CONTENT_TOP + 22, col, CONTENT_BOT - CONTENT_TOP - 22, [
+                para(num("%02d" % (i + 1), 15, LAKS_TEXT), lh=1.3),
+                para(head(it["title"], 26, BRAND if on else INK), lh=1.2, before=10),
+                para(*rich(it.get("body", "")), lh=1.4, before=10)])
+        return s
 
     def comparison(self, left, right, title=None, kicker=None, win="right"):
-        """left/right: dict {'head': str, 'items': [(bool_yes, str), ...]}."""
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        ch = Inches(4.0); top = Emu(int(CONTENT_MID - ch / 2))
-        cw = Inches(5.8); gap = Inches(0.4)
-        for side, col in (("left", left), ("right", right)):
-            x = MARGIN if side == "left" else Emu(int(MARGIN + cw + gap))
-            card = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, top, cw, ch)
-            _solid(card, PAPER); _border(card, INK, 2.0); card.shadow.inherit = False
-            if side == win:
-                _offset_shadow(card, self.signal, dist_pt=5)
-            hb = self._box(slide, x + Inches(0.3), top + Inches(0.25), Emu(int(cw - Inches(0.6))), Inches(0.5))
-            _txt(hb.text_frame, col["head"], font=FONT_MONO, size=14, bold=True, color=INK, mono_label=True)
-            iy = top + Inches(1.0)
-            for yes, text in col["items"]:
-                mk = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x + Inches(0.3), iy + Pt(3),
-                                            Inches(0.22), Inches(0.22))
-                _solid(mk, self.success if yes else self.signal); _no_border(mk); mk.shadow.inherit = False
-                tb = self._box(slide, x + Inches(0.7), iy, Emu(int(cw - Inches(1.0))), Inches(0.5))
-                _txt(tb.text_frame, text, size=17, color=INK_SOFT)
-                iy += Inches(0.6)
-        self._footer(slide)
-        return slide
+        """To kort med +/– foran hvert punkt. Hver side: {'head', 'items': [(True/False, tekst)]}.
+        Vinderen (win='left'/'right'/None) får skygge og grøn overskrift."""
+        s = self.content(title)
+        col = (CONTENT_W - GAP) / 2
+        rows = max(len(left["items"]), len(right["items"]))
+        h = 28 + 24 + 20 + rows * 46 + 18
+        for i, (d, side) in enumerate(((left, "left"), (right, "right"))):
+            x = PAD_X + i * (col + GAP)
+            won = win == side
+            card(s, x, CONTENT_TOP, col, h, shadow=BLACK if won else None)
+            s.text(x + 28, CONTENT_TOP + 26, col - 56, 24, [para(mono(d["head"], 14, BRAND if won else INK),
+                                                                 lh=1.3)])
+            s.rect(x + 28, CONTENT_TOP + 60, col - 56, 2, fill=BLACK, name="Streg")
+            y = CONTENT_TOP + 74
+            for ok, text in d["items"]:
+                s.text(x + 28, y, 30, 46, [para(num("+" if ok else "–", 24, BRAND if ok else LAKS_TEXT), lh=1.2)],
+                       anchor="ctr")
+                s.text(x + 62, y, col - 90, 46, [para(body(text, 20), lh=1.3)], anchor="ctr")
+                y += 46
+        return s
 
-    def bignum(self, value, sub=None, kicker=None, trend=None, source=None):
-        """Ét stort tal i fuld fokus. source: kilde-/note-linje nederst til venstre."""
-        slide = self._new(CANVAS)
-        col = INK
-        if trend == "up": col = self.success
-        if trend == "down": col = self.signal
-        # Blokken var lagt ud med en kicker øverst. Da den forsvandt, blev der
-        # 1 cm for meget luft over tallet — derfor BIGNUM_TOP, ikke 2.1".
-        nb = self._box(slide, MARGIN, BIGNUM_TOP, TITLE_W, Inches(2.8))
-        nb.text_frame.word_wrap = False
-        nb.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE   # langt tal krymper til at passe
-        _txt(nb.text_frame, value, font=FONT_MONO, size=150, bold=True, color=col, line_pct=0.9)
+    def timeline(self, steps, title=None, kicker=None, current=None):
+        """Vandret forløb. steps: [{'when', 'what', 'desc'}]. current (0-baseret) er grøn."""
+        s = self.content(title)
+        n = len(steps)
+        col = CONTENT_W / n
+        y = CONTENT_TOP + 70
+        s.line(PAD_X + 14, y, PAD_X + (n - 1) * col + 14, y, color=BLACK, lw=3, name="Tidslinje")
+        for i, st in enumerate(steps):
+            x = PAD_X + i * col
+            s.rect(x, y - 14, 28, 28, fill=BRAND if i == current else PAPER, line=BLACK, lw=3, name="Trin")
+            ps = [para(mono(st.get("when", "%02d" % (i + 1)), 14, LAKS_TEXT), lh=1.3),
+                  para(head(st["what"], S_BODY, INK), lh=1.25, before=8)]
+            if st.get("desc"):
+                ps.append(para(body(st["desc"], S_SMALL), lh=1.4, before=8))
+            s.text(x, y + 36, col - 28, CONTENT_BOT - y - 36, ps)
+        return s
+
+    def process(self, steps, title=None, current=None, only=None):
+        """Lodret proces med nummererede trin. current = navnet på det aktive trin (grøn,
+        resten nedtones). only = vis kun dette trin (til at bygge listen op slide for slide)."""
+        s = self.content(title)
+        n = len(steps)
+        gap = min(70, (CONTENT_BOT - CONTENT_TOP - 40) / max(n - 1, 1))
+        x, y0 = PAD_X + 14, CONTENT_TOP + 20
+        if only is None:
+            s.line(x, y0, x, y0 + gap * (n - 1), color=BLACK, lw=3, name="Proceslinje")
+        for i, st in enumerate(steps):
+            if only is not None and st != only:
+                continue
+            y = y0 + gap * i
+            on = current is None or st == current
+            s.rect(x - 14, y - 14, 28, 28, fill=BRAND if st == current else PAPER,
+                   line=BLACK if on else "B5B5B5", lw=3, name="Trin")
+            s.text(x + 34, y - 16, 46, 32, [para(num("%02d" % (i + 1), 15, LAKS_TEXT if on else DIM), lh=1.3)],
+                   anchor="ctr")
+            s.text(x + 80, y - 17, 800, 34, [para(body(st, color=INK if on else DIM, bold=True), lh=1.3)],
+                   anchor="ctr")
+        return s
+
+    # ---------- citater og udsagn
+    def statement(self, quote, attribution=None, source=None, title=None, eyebrow=None, highlight_part=None,
+                  width=1000):
+        """Citat/udsagn med laks-streg i venstre side — ingen kasse.
+        Med title: citatet står under titelblokken. highlight_part: delstreng med lysegrøn
+        overstregning. quote kan også være en liste af run()."""
+        s = self.content(title)
+        size = S_QUOTE if title else S_STATEMENT
+        runs = highlight(quote, highlight_part, size) if isinstance(quote, str) else [dict(r, size=size)
+                                                                                     for r in quote]
+        paras = []
+        if eyebrow:
+            paras.append(para(mono(eyebrow, 14, LAKS_TEXT), lh=1.3))
+        paras.append(para(*runs, lh=1.25, before=16 if eyebrow else 0))
+        if attribution:
+            paras.append(para(mono("— " + attribution.lstrip("—– "), 14, INK), lh=1.3, before=24))
+        indent = 34
+        if title:
+            width = min(width, 960)
+            x = (W - width) / 2
+            _, th = layout(paras, width - indent)
+            y = (CONTENT_TOP - 20 + CONTENT_BOT) / 2 - th / 2
+        else:
+            x = PAD_X
+            _, th = layout(paras, width - indent)
+            y = (H - th) / 2
+        s.rect(x, y, 6, th, fill=LAKS, name="Citatstreg")
+        s.text(x + indent, y, width - indent, th + 2, paras)
+        self._source(s, source)
+        return s
+
+    def testimonial(self, quote, name, role=None, kicker=None, image=None, focus=(0.5, 0.5), alt=""):
+        """Citat med portræt: billede med grøn flade til venstre, citat med laks-streg til højre."""
+        s = self.blank()
+        size = 300
+        y0 = (H - size - OFFSET) / 2
+        picture(s, image, PAD_X + OFFSET, y0, size, size, side="left", focus=focus, alt=alt or name,
+                label="Portræt")
+        x = PAD_X + OFFSET + size + 72
+        w = W - PAD_X - x
+        paras = [para(body(quote, 34), lh=1.25),
+                 para(body(name, S_BODY, bold=True), lh=1.3, before=26)]
+        if role:
+            paras.append(para(mono(role, 13, DIM), lh=1.3, before=6))
+        _, th = layout(paras, w - 34)
+        y = y0 + (size + OFFSET - th) / 2
+        s.rect(x, y, 6, th, fill=LAKS, name="Citatstreg")
+        s.text(x + 34, y, w - 34, th + 2, paras)
+        return s
+
+    # ---------- billeder
+    def media_text(self, title, image=None, body_paras=None, bullets=None, eyebrow=None, side="right",
+                   focus=(0.5, 0.5), alt="", size=S_TITLE + 8, free=False, accent_index=None):
+        """Billede + tekst. Regel: højst én 'hård' ting pr. slide — billedet har den grønne
+        flade, så overskriften står fri (ingen blok). free=True: frilagt motiv (PNG med
+        gennemsigtighed) uden grøn flade."""
+        s = self.blank()
+        col_w = CONTENT_W - MEDIA - OFFSET - 96
+        if side == "right":
+            mx, x = W - PAD_X - OFFSET - MEDIA, PAD_X
+        else:
+            mx, x = PAD_X + OFFSET, PAD_X + OFFSET + MEDIA + 96
+        if free and image:
+            s.image(image, mx - 30, MEDIA_Y, MEDIA + 60 + OFFSET, MEDIA + OFFSET, fit="contain", alt=alt)
+        else:
+            picture(s, image, mx, MEDIA_Y, MEDIA, MEDIA, side=side, focus=focus, alt=alt)
+        while size > 28 and max(O._measure(wd, head(wd, size)) for wd in title.split()) > col_w:
+            size -= 2                      # det længste ord skal kunne stå på én linje
+        paras = []
+        if eyebrow:
+            paras.append(para(mono(eyebrow, 14, LAKS_TEXT), lh=1.3))
+        paras.append(para(head(title, size, INK), lh=1.08, before=14 if eyebrow else 0))
+        for i, p in enumerate(body_paras or []):
+            p = dict(p)
+            if i == 0:
+                p["before"] = max(p["before"], 24)
+            paras.append(p)
+        _, th = layout(paras, col_w)
+        lh_ = (list_height(col_w, bullets) + 28) if bullets else 0
+        y = MEDIA_Y + (MEDIA + OFFSET - th - lh_) / 2
+        s.text(x, y, col_w, th + 2, paras, title=True)
+        if bullets:
+            square_list(s, x, y + th + 28, col_w, bullets, accent_index=accent_index)
+        return s
+
+    def hero(self, title, image=None, eyebrow=None, lead=None, side="right", focus=(0.5, 0.5), alt="",
+             meta=None):
+        """Som media_text, men med stor overskrift — forside og andre store øjeblikke."""
+        lead_p = [para(body(lead, S_LEAD), lh=1.45)] if lead else None
+        s = self.media_text(title, image, body_paras=lead_p, eyebrow=eyebrow, side=side, focus=focus, alt=alt,
+                            size=S_DISPLAY - 4)
+        self._meta(s, meta)
+        return s
+
+    def image_text(self, title, bullets=None, kicker=None, image=None, image_left=False, accent_index=None,
+                   focus=(0.5, 0.5), alt=""):
+        """Billede med grøn flade + overskrift og punkter. image_left=True spejler."""
+        return self.media_text(title, image, bullets=bullets, side="left" if image_left else "right",
+                               focus=focus, alt=alt, accent_index=accent_index)
+
+    def cover(self, title, lead=None, kicker=None, image=None, focus=(0.5, 0.5), alt=""):
+        """Fuldt billede med sort titelblok nederst til venstre."""
+        s = self.blank(logo=None)
+        picture(s, image, 0, 0, W, H, focus=focus, alt=alt, label="Baggrundsbillede 16:9")
+        paras = [para(head(title, 52), lh=1.08)]
+        if lead:
+            paras.append(para(body(lead, S_BODY, PAPER), lh=1.4, before=14))
+        _, bh = block(s, 0, 0, paras, 820, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, measure_only=True)
+        block(s, PAD_X, H - 64 - bh, paras, 820, off=DISPLAY_SHADOW, pad=DISPLAY_PAD, title=True)
+        return s
+
+    def image_full(self, caption=None, label=None, kicker=None, image=None, focus=(0.5, 0.5), alt=""):
+        """Fuldt billede med billedtekst i en sort blok: mono-label i laks + tekst."""
+        s = self.blank(logo=None)
+        picture(s, image, 0, 0, W, H, focus=focus, alt=alt or (caption or ""), label="Fuldt billede")
+        label = label or kicker
+        runs = []
+        if label:
+            runs += [mono(label, 14, LAKS), run("   ", size=20, color=PAPER)]
+        if caption:
+            runs.append(body(caption, 20, PAPER, bold=True))
+        if runs:
+            paras = [para(*runs, lh=1.3)]
+            _, bh = block(s, 0, 0, paras, 1000, off=6, pad=(20, 12), measure_only=True)
+            block(s, PAD_X, H - 56 - bh, paras, 1000, off=6, pad=(20, 12), name="Billedtekst")
+        return s
+
+    def image_grid(self, title=None, n=6, cols=3, kicker=None, images=None):
+        """Gitter af billeder under titlen. images: liste af stier (None = pladsholder)."""
+        s = self.content(title)
+        images = list(images or [None] * n)
+        rows = math.ceil(len(images) / cols)
+        g = 20
+        top = CONTENT_TOP if title else PAD_TOP
+        cw = (CONTENT_W - g * (cols - 1)) / cols
+        ch = (CONTENT_BOT - top - g * (rows - 1)) / rows
+        for i, im in enumerate(images):
+            picture(s, im, PAD_X + (i % cols) * (cw + g), top + (i // cols) * (ch + g), cw, ch,
+                    label="%02d" % (i + 1))
+        return s
+
+    # ---------- tal
+    def bignum(self, value, sub=None, kicker=None, trend=None, source=None, title=None):
+        """Ét stort tal. trend='up' giver ØS-grøn, 'down' laks."""
+        s = self.content(title)
+        col = {"up": BRAND, "down": LAKS_TEXT}.get(trend, INK)
+        # "+18 %" -> tallet i mono, enheden mindre i sans (et mono-mellemrum er for bredt i 200 px)
+        value, _, unit = value.strip().partition(" ")
+        if not unit and value.endswith("%") and len(value) > 1:
+            value, unit = value[:-1], "%"
+
+        def runs(z):
+            return [num(value, z, col)] + ([head(" " + unit, z * 0.45, col)] if unit else [])
+
+        size = 200
+        while size > 80 and sum(O._measure(r["text"], r) for r in runs(size)) > CONTENT_W:
+            size -= 4
+        sub_p = [para(body(sub, S_LEAD), lh=1.45)] if sub else []
+        sub_h = layout(sub_p, 640)[1] if sub else 0
+        total = size + (20 + sub_h if sub else 0)
+        top = CONTENT_TOP if title else PAD_TOP
+        y = (top + CONTENT_BOT - total) / 2
+        s.text(PAD_X, y, CONTENT_W, size + 2, [para(*runs(size), lh=1.0)], name="Stort tal")
         if sub:
-            sb = self._box(slide, MARGIN, BIGNUM_TOP + Inches(3.1),
-                           Inches(9), Inches(1.0))
-            _txt(sb.text_frame, sub, size=24, color=INK_SOFT, line_pct=1.2)
-        self._source(slide, source)
-        self._footer(slide)
-        return slide
+            s.text(PAD_X, y + size + 20, 640, sub_h + 2, sub_p)
+        self._source(s, source)
+        return s
+
+    def stats(self, cards, title=None, kicker=None, primary_index=None, source=None):
+        """Nøgletal i hvide kort. cards: [{'num', 'label', 'trend' (valgfri)}].
+        primary_index: det kort der fremhæves (lysegrøn flade)."""
+        s = self.content(title)
+        n = len(cards)
+        g = 32
+        cw = (CONTENT_W - g * (n - 1)) / n
+        ch = 230
+        top = CONTENT_TOP if title else PAD_TOP
+        y = (top + CONTENT_BOT - ch) / 2
+        size = min(fit_size(c["num"], lambda t, z: num(t, z), 64, cw - 64, floor=28) for c in cards)
+        for i, c in enumerate(cards):
+            x = PAD_X + i * (cw + g)
+            card(s, x, y, cw, ch, fill=HILITE if i == primary_index else PAPER, name="Nøgletal")
+            col = {"up": BRAND, "down": LAKS_TEXT}.get(c.get("trend"), INK)
+            s.text(x + 32, y + 24, cw - 64, ch - 48, [
+                para(num(c["num"], size, col), lh=1.1),
+                para(mono(c["label"], 14, INK if i == primary_index else DIM), lh=1.35, before=14)],
+                anchor="ctr")
+        self._source(s, source)
+        return s
 
     def bars(self, rows, title=None, kicker=None, accent_index=None, source=None):
-        """rows: liste af dict {'label': str, 'pct': 0-100, 'value': str}.
-        source: kilde-/note-linje nederst til venstre."""
-        slide = self._new(CANVAS)
-        self._head(slide, kicker, title)
-        top = CONTENT_TOP; rh = Inches(0.55); gap = Inches(0.35)
-        lbl_w = Inches(2.2); val_w = Inches(1.1)
-        track_x = MARGIN + lbl_w
-        track_w = SLIDE_W - MARGIN - track_x - val_w - Inches(0.2)
+        """Vandrette søjler. rows: [{'label', 'pct' (0–100), 'value'}]. accent_index er grøn."""
+        s = self.content(title)
+        n = len(rows)
+        pitch, bh = 64, 34
+        top = CONTENT_TOP if title else PAD_TOP
+        y0 = (top + CONTENT_BOT - (pitch * (n - 1) + bh)) / 2
+        bx, bw = PAD_X + 240, CONTENT_W - 240 - 120
+        s.line(bx, y0 - 16, bx, y0 + pitch * (n - 1) + bh + 16, color=BLACK, lw=3, name="Akse")
         for i, r in enumerate(rows):
-            y = Emu(int(top + i * (rh + gap)))
-            lb = self._box(slide, MARGIN, y + Inches(0.08), lbl_w, Inches(0.4))
-            _txt(lb.text_frame, r["label"], size=17, color=INK)
-            track = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, track_x, y, track_w, rh)
-            _solid(track, PAPER); _border(track, INK, 2.0); track.shadow.inherit = False
-            fill_w = Emu(int(track_w * max(0, min(100, r["pct"])) / 100))
-            if fill_w > 0:
-                fill = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, track_x, y, fill_w, rh)
-                _solid(fill, self.signal if i == accent_index else INK)
-                _no_border(fill); fill.shadow.inherit = False
-            vb = self._box(slide, Emu(int(track_x + track_w + Inches(0.15))), y + Inches(0.08), val_w, Inches(0.4))
-            _txt(vb.text_frame, r["value"], font=FONT_MONO, size=17, bold=True, color=INK,
-                 align=PP_ALIGN.RIGHT)
-        self._source(slide, source)
-        self._footer(slide)
-        return slide
+            y = y0 + i * pitch
+            on = i == accent_index
+            w = max(bw * float(r["pct"]) / 100.0, 3)
+            s.text(PAD_X, y, 224, bh, [para(body(r["label"], 20, bold=on), lh=1.3)], anchor="ctr")
+            s.rect(bx, y, w, bh, fill=BRAND if on else BLACK, name="Søjle")
+            s.text(bx + w + 14, y, 110, bh, [para(num(str(r.get("value", "")), 20, BRAND if on else INK),
+                                                  lh=1.3)], anchor="ctr")
+        self._source(s, source)
+        return s
 
-    def testimonial(self, quote, name, role, kicker=None, image=None):
-        slide = self._new(CANVAS)
-        self._img(slide, MARGIN, Inches(2.0), Inches(2.6), Inches(2.6), "PORTRÆT", image)
-        bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(4.0), Inches(2.0), Pt(6), Inches(2.0))
-        _solid(bar, self.signal); _no_border(bar); bar.shadow.inherit = False
-        q = self._box(slide, Inches(4.3), Inches(2.0), Inches(8.0), Inches(2.2))
-        _txt(q.text_frame, quote, size=30, bold=True, color=INK, line_pct=1.2)
-        nb = self._box(slide, Inches(4.3), Inches(4.3), Inches(8), Inches(0.5))
-        _txt(nb.text_frame, name, size=18, bold=True, color=INK)
-        rb = self._box(slide, Inches(4.3), Inches(4.8), Inches(8), Inches(0.4))
-        _txt(rb.text_frame, role, font=FONT_MONO, size=13, bold=True, color=MUTED, mono_label=True)
-        self._footer(slide)
-        return slide
+    def table(self, headers, rows, title=None, kicker=None, numeric_cols=(), highlight_row=None, source=None,
+              col_widths=None):
+        """Tabel: sort hovedrække med mono-versaler, hvide rækker, sort kant og hård skygge.
+        numeric_cols højrestilles i mono. highlight_row får lysegrøn flade."""
+        s = self.content(title)
+        n = len(headers)
+        wts = list(col_widths or [1] * n)
+        cws = [CONTENT_W * w / float(sum(wts)) for w in wts]
+        top = CONTENT_TOP if title else PAD_TOP
+        hh = 46
+        rh = min(54, (CONTENT_BOT - top - hh - SHADOW) / max(len(rows), 1))
+        fs = 20 if rh >= 46 else 17
+        th = hh + rh * len(rows)
+        s.rect(PAD_X + SHADOW, top + SHADOW, CONTENT_W, th, fill=BLACK, name="Tabel, skygge")
+        s.rect(PAD_X, top, CONTENT_W, th, fill=PAPER, name="Tabel")
+        s.rect(PAD_X, top, CONTENT_W, hh, fill=BLACK, name="Hovedrække")
 
-    def save(self, path):
-        """Skriv .pptx. Indlejrer fonten med mindre embed_fonts=False."""
-        embedded = _embed_fonts(self.prs) if self.embed_fonts else 0
-        if not embedded:
-            _warn_if_fonts_missing()   # kun relevant når fonten IKKE rejser med
-        self.prs.save(path)
+        def cell(ci, y, h, r):
+            x = PAD_X + sum(cws[:ci])
+            s.text(x + 18, y, cws[ci] - 36, h, [para(r, align="r" if ci in numeric_cols else "l", lh=1.25)],
+                   anchor="ctr")
+
+        for ci, t in enumerate(headers):
+            cell(ci, top, hh, mono(t, 13, PAPER))
+        for ri, row in enumerate(rows):
+            y = top + hh + ri * rh
+            hot = ri == highlight_row
+            if hot:
+                s.rect(PAD_X, y, CONTENT_W, rh, fill=HILITE, name="Fremhævet række")
+            elif ri:
+                s.rect(PAD_X, y, CONTENT_W, 1, fill=RULE, name="Delelinje")
+            for ci, t in enumerate(row):
+                cell(ci, y, rh, num(str(t), fs, INK, bold=hot) if ci in numeric_cols
+                     else body(str(t), fs, bold=hot))
+        s.rect(PAD_X, top, CONTENT_W, th, fill=None, line=BLACK, lw=BORDER, name="Tabel, kant")
+        self._source(s, source)
+        return s
+
+    # ---------- gem
+    def save(self, path, preview_dir=None):
+        """Skriv .pptx (og PNG-preview hvis preview_dir er sat). Returnerer stien.
+        Advarsler om tekst der ikke kan være i sin boks ligger i self.warnings."""
+        self.warnings = super().save(path, preview_dir=preview_dir, embed_fonts=self.embed_fonts)
         return path

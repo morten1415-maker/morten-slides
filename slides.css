@@ -1,66 +1,66 @@
 /* =====================================================
-   Økonomistyrelsen — Slide-framework (16:9)
-   Bærbar brutalisme + ØS-grøn som identitets-anker.
-   Dette er systemets ENESTE stylesheet — der findes ikke
-   længere en separat "primær" stil at vælge imellem.
+   Økonomistyrelsen — Slide-framework (16:9, 1280 x 720)
+   Lys grå grund, sorte kanter, hårde skygger, IBM Plex.
+   Overskriften står i en sort blok med grøn skygge.
+   Billeder får en grøn flade forskudt bagved.
+
+   Dette er systemets ENESTE stylesheet. Målene er de
+   samme px-tal som i build_pptx.py — verify.py holder
+   de to op mod hinanden.
    Brug:  <link rel="stylesheet" href="slides.css">
    ===================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;700&display=swap');
+/* IBM Plex ligger i assets/fonts/ (de samme filer som indlejres i .pptx), så
+   HTML-slides også virker offline og bag en firewall der blokerer Google Fonts. */
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: swap; src: url('assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 700; font-display: swap; src: url('assets/fonts/IBMPlexSans-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; font-display: swap; src: url('assets/fonts/IBMPlexMono-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 700; font-display: swap; src: url('assets/fonts/IBMPlexMono-Bold.ttf') format('truetype'); }
 
 :root {
-  /* Genbrug af design-system-tokens */
-  --bg-canvas: #f4f4f2;
-  --bg-paper: #ffffff;
-  --bg-accent: #fef3c7;
-  --bg-soft-red: #fff5f5;
-  --bg-soft-green: #d1fae5;
-  --color-ink: #000000;
-  --color-ink-soft: #333333;
-  --color-muted: #6b6b6b;
-  --color-line-soft: #e8e8e3;
-  /* ØS-identitet */
-  --color-brand: #066b43;         /* ØS-grøn — brand-anker */
-  --color-brand-soft: #b3e8ca;    /* lys grøn, supplerende */
-  --color-red: #ed5e66;           /* Laks — ØS' signalfarve (danger/vigtigt/fald) */
-  --color-success: #066b43;       /* positiv/vækst bærer ØS-grøn */
+  /* Farver */
+  --ground: #f4f4f2;            /* slidens baggrund */
+  --paper: #ffffff;             /* kort, tabeller */
+  --ink: #141414;               /* tekst */
+  --black: #000000;             /* kanter, skygger, titelblokke */
+  --dim: #6e6e6e;               /* nedtonet tekst (4,6:1) */
+  --rule: #d6d6d6;              /* tynde indre delelinjer */
+  --empty: #e2e2de;             /* billed-pladsholder */
+  --brand: #066b43;             /* ØS-grøn */
+  --hilite: #b3e8ca;            /* lysegrøn: overstregning, fremhævet række/kort */
+  --laks: #ed5e66;              /* signal på store flader og på sort */
+  --laks-text: #c93a44;         /* laks til tekst på lys grund (4,6:1) */
+  --sticky: #fff9b1;            /* post-it */
 
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
-  --font-serif: 'IBM Plex Serif', Georgia, serif;
 
-  --shadow-sm: 3px 3px 0 var(--color-ink);
-  --shadow-md: 5px 5px 0 var(--color-ink);
-  --shadow-lg: 8px 8px 0 var(--color-ink);
-  --shadow-accent: 5px 5px 0 var(--color-red);
-
-  /* Slide-canvas (forstørret type-skala) */
+  /* Faste mål — samme tal som i build_pptx.py */
   --slide-w: 1280px;
   --slide-h: 720px;
-  --slide-pad: 64px;
-  /* Ekstra luft i bunden: logoet sidder 27px fra bundkanten og er 41px højt,
-     så indhold der fylder hele højden må stoppe over det. */
-  --slide-pad-bottom: 78px;
+  --pad-x: 88px;                /* PAD_X */
+  --title-y: 64px;              /* TITLE_Y: titelblokkens top */
+  --content-top: 176px;         /* CONTENT_TOP */
+  --pad-bottom: 80px;           /* 720 - CONTENT_BOT (640) */
+  --border: 3px;                /* BORDER */
+  --shadow: 8px;                /* SHADOW */
+  --offset: 24px;               /* OFFSET: den grønne flade bag billeder */
+  --media: 470px;               /* MEDIA: billedrammen i billede+tekst */
+  --gap: 40px;                  /* GAP mellem spalter */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
-  background: #111;          /* mørk "scene" rundt om sliden */
+  background: #111;             /* mørk "scene" rundt om sliden */
   font-family: var(--font-sans);
-  color: var(--color-ink);
+  color: var(--ink);
   overflow: hidden;
 }
 
 /* ---------- Deck-stage: centrerer + skalerer canvas ---------- */
-.deck {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-}
-
+.deck { position: fixed; inset: 0; display: grid; place-items: center; }
 .deck__stage {
   width: var(--slide-w);
   height: var(--slide-h);
@@ -74,650 +74,507 @@ html, body {
   inset: 0;
   width: var(--slide-w);
   height: var(--slide-h);
-  background: var(--bg-canvas);
-  padding: var(--slide-pad) var(--slide-pad) var(--slide-pad-bottom);
+  background: var(--ground);
+  padding: var(--title-y) var(--pad-x) var(--pad-bottom);
   display: none;
   flex-direction: column;
-  border: 3px solid var(--color-ink);
+  align-items: stretch;
+  overflow: hidden;
 }
 .slide.is-active { display: flex; }
 
-/* ---------- Fælles tekst-roller ---------- */
-.kicker {
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-  margin-bottom: 20px;
+/* ---------- ØS-logo: højre hjørne, ens luft til højre og bund ---------- */
+.slide::after {
+  content: '';
+  position: absolute;
+  right: 32px;
+  bottom: 32px;
+  width: 124px;
+  height: 34px;
+  background: url('assets/oes-logo-green.png') right bottom / contain no-repeat;
+  pointer-events: none;
 }
+/* Billeder i fuld flade går helt til kanten — intet logo */
+.slide--cover::after,
+.slide--image-full::after { content: none; }
+
+/* =====================================================
+   TEKST-ROLLER
+   Sans = indhold. Mono = system (labels, numre, tal).
+   ===================================================== */
+
+/* Overskriften: sort skilt med grøn skygge, øverst til venstre. Én pr. slide. */
 .slide-title {
-  font-size: 56px;
+  align-self: flex-start;
+  background: var(--black);
+  color: #fff;
+  font-size: 31px;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.2;
+  padding: 12px 19px;
+  box-shadow: 7px 7px 0 var(--brand);
+  margin-bottom: 51px;           /* blokken er 61px høj: 64 + 61 + 51 = 176 = --content-top */
+  max-width: 100%;
 }
-.slide-h2 {
-  font-size: 36px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.lead {
-  font-size: 28px;
-  line-height: 1.4;
-  color: var(--color-ink-soft);
-  max-width: 22ch;
-}
-.body {
-  font-size: 22px;
-  line-height: 1.45;
-  color: var(--color-ink-soft);
+/* Delnummeret foran titlen ("01") — slides.js sætter data-part ud fra kapitlerne */
+.slide-title[data-part]::before {
+  content: attr(data-part);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--laks);
+  margin-right: 0.6em;
 }
 
-/* Bullets — små sorte firkanter, aldrig runde prikker */
-.bullets { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 28px; }
-.bullets li {
-  position: relative;
-  padding-left: 34px;
-  font-size: 22px;
-  line-height: 1.4;
-  color: var(--color-ink-soft);
+/* Store blokke: forside, kapitel, tak */
+.slide-display {
+  align-self: flex-start;
+  background: var(--black);
+  color: #fff;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.05;
+  padding: 24px 36px;
+  box-shadow: 12px 12px 0 var(--brand);
+  max-width: 1060px;
 }
+
+/* Fri overskrift (ingen blok) — ved siden af et billede */
+.slide-h2 { font-size: 44px; font-weight: 700; line-height: 1.08; }
+
+/* Mono-labels */
+.eyebrow, .kicker, .label-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--laks-text);
+  line-height: 1.3;
+}
+.lead { font-size: 24px; line-height: 1.45; max-width: 760px; }
+.body { font-size: 22px; line-height: 1.45; }
+.sub  { font-size: 22px; line-height: 1.4; max-width: 520px; margin: -31px 0 20px; }  /* lige under titelblokken */
+mark, .hl { background: var(--hilite); color: inherit; padding: 0 0.08em; }
+
+/* Bullets — små sorte firkanter, aldrig runde prikker */
+.bullets { list-style: none; display: flex; flex-direction: column; gap: 24px; max-width: 1060px; }
+.bullets li { position: relative; padding-left: 30px; font-size: 22px; line-height: 1.4; }
 .bullets li::before {
   content: '';
   position: absolute;
-  left: 0; top: 11px;
-  width: 14px; height: 14px;
-  background: var(--color-ink);
+  left: 0; top: 10px;
+  width: 11px; height: 11px;
+  background: var(--black);
 }
-.bullets li.is-accent::before { background: var(--color-red); }
+.bullets li.is-accent::before { background: var(--laks); }
+.bullets--tight { gap: 18px; }
 
-/* Footer-stribe */
-.slide__footer {
-  position: relative;              /* anker for ØS-logoet, se nederst */
-  margin-top: auto;
-  padding-top: 20px;
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-/* Side-nummer fjernet */
-.slide__footer [data-slide-no] { display: none; }
-
-/* ===== 1. Title =====
-   Kassen har FASTE mål, ikke content-hugging: den skal være den samme brede,
-   rolige flade hver gang — 1056 x 346px svarer 1:1 til PPTX' 11.0" x 3.6"
-   inden for det samme 16:9-canvas. Uden dem krympede kassen til ~halv bredde
-   i HTML og lignede ikke PPTX-forsiden. Teksten centreres lodret i kassen
-   (samme som anchor=ctr i PPTX), og kassen vokser hvis manchetten er lang. */
-.slide--title { justify-content: flex-start; }
-.slide--title .frame {
-  margin-top: 96px;              /* kassens top = 1.70" af 7.5", som i PPTX */
-  border: 3px solid var(--color-ink);
-  box-shadow: var(--shadow-lg);
-  background: var(--bg-paper);
-  box-sizing: border-box;
-  width: 1056px;                 /* = 11.0" af 13.333" */
-  min-height: 346px;             /* = 3.6" af 7.5" — kun overskrift */
-  padding: 53px 58px;            /* = PPTX' tIns/bIns 0.55" og lIns/rIns 0.6" */
-  align-self: flex-start;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-/* Med manchet er kassen 4.0" høj, som i PPTX; uden er den 3.6" */
-.slide--title .frame:has(.lead) { min-height: 384px; }
-
-.slide--title .slide-display {
-  font-size: 77px;               /* = 58pt */
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
-}
-.slide--title .lead {
-  margin-top: 27px;              /* = PPTX' space_after 20pt */
-  font-size: 29px;               /* = 22pt */
-  line-height: 1.25;
-  max-width: none;               /* manchetten må bruge kassens fulde bredde */
-}
-
-/* Valgfri meta-linje UNDER kassen: dato / anledning / afsender.
-   Mono, uppercase, muted — som i referencedeckene. */
-.slide--title .meta {
-  margin-top: 36px;              /* = 0.38" under kassen */
-  font-family: var(--font-mono);
-  font-size: 17px;               /* = 13pt */
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-/* ===== 2. Section divider ===== */
-.slide--section { justify-content: center; align-items: flex-start; gap: 16px; }
-.slide--section.is-dark { background: var(--color-ink); border-color: var(--color-ink); color: var(--bg-paper); }
-.slide--section.is-yellow { background: var(--bg-accent); }
-.slide--section .num {
-  font-family: var(--font-mono);
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-.slide--section .slide-display {
-  font-size: 88px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-.slide--section.is-dark .kicker { color: #bdbdbd; }
-
-/* ===== 3. Content ===== */
-.slide--content { }
-
-/* ===== 4. Split / two-column ===== */
-.slide--split .cols {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  gap: 40px;
-  flex: 1;
-  align-items: start;
-  margin-top: 12px;
-}
-.slide--split .divider { background: var(--color-line-soft); width: 1px; height: 100%; }
-.slide--split .col .kicker { margin-bottom: 16px; }
-
-/* ===== 5. Statement / quote ===== */
-.slide--statement { justify-content: center; }
-.slide--statement .quote {
-  font-size: 48px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  max-width: 26ch;
-  border-left: 6px solid var(--color-red);
-  padding-left: 32px;
-}
-.slide--statement .source {
-  margin-top: 28px;
-  margin-left: 38px;
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-/* ===== 6. Stats / KPI ===== */
-.slide--stats .cards {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 28px;
-  flex: 1;
-  align-items: stretch;       /* lige høje kort */
-  margin-top: 12px;
-}
-.stat-card {
-  border: 2px solid var(--color-ink);
-  background: var(--bg-paper);
-  box-shadow: var(--shadow-md);
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;     /* indhold centreret lodret i kortet */
-}
-.stat-card.is-accent { background: var(--bg-accent); }
-.stat-card.is-primary { box-shadow: var(--shadow-accent); }
-.stat-card .num {
-  font-family: var(--font-mono);
-  font-size: 60px;             /* mindre + nowrap så lange værdier ("1,2 mio") ikke ombrydes */
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-.stat-card .num.is-up { color: var(--color-success); }
-.stat-card .num.is-down { color: var(--color-red); }
-.stat-card .stat-label {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-  margin-top: 16px;
-}
-
-/* ===== 7. Table ===== */
-.slide--table table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 2px solid var(--color-ink);
-  margin-top: 20px;
-  font-size: 19px;
-}
-.slide--table thead th {
-  background: var(--color-ink);
-  color: var(--bg-paper);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-align: left;
-  padding: 14px 18px;
-}
-.slide--table th.num, .slide--table td.num {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-.slide--table tbody td {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--color-line-soft);
-  background: var(--bg-paper);
-}
-.slide--table tbody tr.is-highlight td { background: var(--bg-accent); }
-
-/* ===== 8. Closing ===== */
-.slide--closing { justify-content: center; align-items: flex-start; }
-.slide--closing .slide-display {
-  font-size: 96px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-.slide--closing .cta {
-  margin-top: 32px;
+/* Chip: lille sort label */
+.chip {
   display: inline-block;
-  background: var(--color-ink);
-  color: var(--bg-paper);
+  background: var(--black);
+  color: #fff;
   font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 16px 28px;
-  border: 2px solid var(--color-ink);
-  border-radius: 4px;
-  box-shadow: var(--shadow-accent);
+  padding: 5px 10px;
+}
+.chip.is-brand { background: var(--brand); }
+
+/* Kort: hvid boks med sort kant og hård skygge */
+.card {
+  background: var(--paper);
+  border: var(--border) solid var(--black);
+  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
 }
 
-/* =====================================================
-   PRÆSENTATIONS-ELEMENTER (ud over UI-porteringen)
-   Billed-slides, agenda, kort, timeline, sammenligning,
-   store tal, søjler, testimonial. Samme brutalist-DNA.
-   ===================================================== */
+/* Post-it */
+.sticky {
+  background: var(--sticky);
+  border: var(--border) solid var(--black);
+  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
+  width: 236px; height: 236px;
+  padding: 21px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  font-size: 24px; line-height: 1.25;
+}
 
-/* ---------- Billed-placeholder (genbruges overalt) ---------- */
+/* Kilde-/note-linje nederst til venstre. Virker på enhver slide. */
+.slide__source, .slide .meta {
+  position: absolute;
+  left: var(--pad-x);
+  bottom: 38px;
+  max-width: 900px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--dim);
+  line-height: 1.3;
+}
+.slide__source { font-size: 12px; }
+.slide .meta { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ---------- Billeder ---------- */
 .img {
   position: relative;
-  background: var(--color-line-soft);
-  border: 2px solid var(--color-ink);
+  background: var(--empty);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .img > img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* Placeholder-label vises kun når der ikke er et <img> */
-.img::after {
+.img::after {                    /* pladsholder-label, kun når der ikke er et <img> */
   content: attr(data-label);
   font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: #555;                   /* --dim har kun 3,9:1 på pladsholderens grå */
 }
 .img:has(img)::after { content: none; }
-/* lille sort hjørne-markør så placeholderen ser "system" ud */
-.img::before {
-  content: '';
-  position: absolute;
-  top: 12px; left: 12px;
-  width: 18px; height: 18px;
-  border-top: 3px solid var(--color-ink);
-  border-left: 3px solid var(--color-ink);
+/* Signaturen: grøn flade forskudt bag billedet */
+.media { box-shadow: var(--offset) var(--offset) 0 var(--brand); overflow: visible; }
+.media > img { position: relative; }
+.media.is-left { box-shadow: calc(-1 * var(--offset)) var(--offset) 0 var(--brand); }
+
+/* =====================================================
+   SLIDE-TYPER
+   ===================================================== */
+
+/* ===== Forside (uden billede) ===== */
+.slide--title { justify-content: center; padding-bottom: 100px; }
+.slide--title .frame { display: flex; flex-direction: column; align-items: flex-start; }
+.slide--title .lead { margin-top: 44px; }     /* 32px + blokkens 12px skygge */
+
+/* ===== Kapitel ===== */
+.slide--section { justify-content: center; padding-bottom: 100px; }
+.slide--section .label, .slide--section .num {
+  align-self: flex-start;
+  background: var(--laks);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 8px 20px;
+  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
+  margin-bottom: 5px;
+  position: relative; z-index: 1;
 }
 
-/* ===== 9. Cover / hero med baggrundsbillede ===== */
-.slide--cover { padding: 0; }
-.slide--cover .img { position: absolute; inset: 0; border: none; }
-.slide--cover .img::before { display: none; }
-.slide--cover .overlay {
-  position: absolute;
-  left: 56px; bottom: 56px;
-  background: var(--bg-paper);
-  border: 3px solid var(--color-ink);
-  box-shadow: var(--shadow-lg);
-  padding: 44px 48px;
-  max-width: 64%;
+/* ===== Afslutning ===== */
+.slide--closing { justify-content: center; align-items: flex-start; }
+.slide--closing .lead { margin-top: 44px; }
+.slide--closing .cta {
+  margin-top: 32px;
+  background: var(--brand);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 18px;
+  box-shadow: 5px 5px 0 var(--black);
+  text-decoration: none;
 }
-.slide--cover .slide-display { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.06; }
-.slide--cover .overlay .kicker { margin-bottom: 16px; }
-.slide--cover .overlay .lead { margin-top: 22px; font-size: 22px; line-height: 1.3; }
 
-/* ===== 10. Full-bleed billede med titel-overlay ===== */
-.slide--image-full { padding: 0; }
-.slide--image-full .img { position: absolute; inset: 0; border: none; }
-.slide--image-full .img::before { display: none; }
-.slide--image-full .caption {
-  position: absolute;
-  left: 0; bottom: 48px;
-  background: var(--color-ink);
-  color: var(--bg-paper);
-  padding: 14px 24px;
-  display: flex; gap: 16px; align-items: baseline;
-}
-.slide--image-full .caption .kicker { color: var(--color-red); margin: 0; }
-.slide--image-full .caption .t { font-size: 22px; font-weight: 600; }
-
-/* ===== 11. Billede + tekst (side om side) ===== */
-.slide--image-text .layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 44px;
-  flex: 1;
-  margin-top: 8px;
-  align-items: stretch;
-}
-.slide--image-text.is-image-left .layout { direction: rtl; }
-.slide--image-text.is-image-left .layout > * { direction: ltr; }
-.slide--image-text .media { min-height: 380px; }
-.slide--image-text .text-col { display: flex; flex-direction: column; justify-content: center; }
-
-/* ===== 12. Billed-grid / galleri ===== */
-.slide--image-grid .grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-rows: 1fr;
-  gap: 20px;
-  flex: 1;
-  margin-top: 12px;
-}
-.slide--image-grid.cols-3 .grid { grid-template-columns: 1fr 1fr 1fr; }
-
-/* ===== 13. Agenda / indholdsfortegnelse ===== */
-.slide--agenda .list { margin-top: 20px; flex: 1; }
+/* ===== Agenda ===== */
+.slide--agenda .list { width: 900px; border-top: 3px solid var(--black); }
 .slide--agenda .row {
   display: grid;
-  grid-template-columns: 64px 1fr;
-  align-items: baseline;
-  gap: 20px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--color-line-soft);
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  height: 99px;
+  border-bottom: 1.5px solid var(--black);
 }
-.slide--agenda .row .n {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
-}
-.slide--agenda .row .t { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
-.slide--agenda .row.is-current .n { color: var(--color-red); }
-.slide--agenda .row.is-current .t { }
+.slide--agenda .row .n { font-family: var(--font-mono); font-size: 26px; font-weight: 700; color: var(--laks-text); }
+.slide--agenda .row .t { font-size: 32px; font-weight: 700; justify-self: start; }
+.slide--agenda .list:has(.is-current) .row:not(.is-current) .n { color: var(--dim); }
+.slide--agenda .row.is-current .t { background: var(--hilite); }
 
-/* ===== 14. Feature-kort (3-op) ===== */
-.slide--cards .grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 24px;
-  flex: 1;
-  margin-top: 16px;
-  align-items: stretch;
-}
-.feature {
-  border: 2px solid var(--color-ink);
-  background: var(--bg-paper);
-  box-shadow: var(--shadow-sm);
-  padding: 26px;
-  display: flex; flex-direction: column;
-}
-.feature.is-accent { background: var(--bg-accent); }
-.feature .icon {
-  width: 44px; height: 44px;
-  background: var(--color-ink);
-  margin-bottom: 18px;
-}
-.feature.is-accent .icon { background: var(--color-red); }
-.feature .ftitle { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-.feature .fbody { font-size: 17px; line-height: 1.4; color: var(--color-ink-soft); margin-top: 10px; }
+/* ===== To spalter (split) ===== */
+.slide--split .cols { display: grid; grid-template-columns: 1fr 80px 1fr; }
+.slide--split .col { border-top: 3px solid var(--black); padding-top: 20px; }
+.slide--split .col-head { font-size: 34px; font-weight: 700; line-height: 1.15; margin-top: 10px; }
+.slide--split .col.is-accent .col-head { color: var(--brand); }
+.slide--split .col .body { margin-top: 14px; }
+.slide--split .divider { font-size: 34px; font-weight: 700; text-align: center; padding-top: 64px; }
 
-/* ===== 15. Timeline / proces-trin ===== */
-.slide--timeline .track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 0;
-  flex: 1;
-  align-items: start;
-  margin-top: 36px;
+/* ===== Spalter med nummer (cards) ===== */
+.slide--cards .grid { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--gap); counter-reset: col; }
+.feature { border-top: 3px solid var(--black); padding-top: 22px; counter-increment: col; }
+.feature::before {
+  content: counter(col, decimal-leading-zero);
+  display: block;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--laks-text);
 }
-.step { position: relative; padding-right: 24px; }
-.step .dot {
-  width: 24px; height: 24px;
-  background: var(--bg-paper);
-  border: 3px solid var(--color-ink);
-  position: relative; z-index: 2;
+.feature .icon { display: none; }          /* fra den gamle stil — bruges ikke længere */
+.feature .ftitle { font-size: 26px; font-weight: 700; line-height: 1.2; margin-top: 10px; }
+.feature .fbody { font-size: 22px; line-height: 1.4; margin-top: 10px; }
+.feature.is-accent { border-top-color: var(--brand); }
+.feature.is-accent .ftitle { color: var(--brand); }
+
+/* ===== Sammenligning ===== */
+.slide--compare .cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-items: start; }
+.compare-card { background: var(--paper); border: var(--border) solid var(--black); padding: 26px 28px 18px; }
+.compare-card.is-win { box-shadow: var(--shadow) var(--shadow) 0 var(--black); }
+.compare-card .chead {
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding-bottom: 14px; margin-bottom: 12px;
+  border-bottom: 2px solid var(--black);
 }
-.step.is-current .dot { background: var(--color-red); border-color: var(--color-red); }
-.step .line {
-  position: absolute;
-  top: 10px; left: 24px; right: 0;
-  height: 3px; background: var(--color-ink);
-}
+.compare-card.is-win .chead { color: var(--brand); }
+.compare-card .citem { display: flex; gap: 14px; align-items: center; height: 46px; font-size: 20px; }
+.compare-card .mk { width: 20px; flex: none; font-family: var(--font-mono); font-size: 24px; font-weight: 700; line-height: 1; }
+.compare-card .mk.yes { color: var(--brand); }
+.compare-card .mk.yes::before { content: '+'; }
+.compare-card .mk.no { color: var(--laks-text); }
+.compare-card .mk.no::before { content: '–'; }
+
+/* ===== Tidslinje (vandret) ===== */
+.slide--timeline .track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 56px; }
+.step { position: relative; padding-right: 28px; }
+.step .dot { width: 28px; height: 28px; background: var(--paper); border: 3px solid var(--black); position: relative; z-index: 2; }
+.step.is-current .dot { background: var(--brand); }
+.step .line { position: absolute; top: 12.5px; left: 14px; right: -14px; height: 3px; background: var(--black); }
 .step:last-child .line { display: none; }
 .step .when {
-  font-family: var(--font-mono);
-  font-size: 13px; font-weight: 600;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--color-muted);
-  margin: 18px 0 6px;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--laks-text);
+  margin-top: 22px;
 }
-.step .what { font-size: 18px; font-weight: 600; padding-right: 20px; }
-.step .desc { font-size: 15px; color: var(--color-ink-soft); margin-top: 6px; padding-right: 20px; }
+.step .what { font-size: 22px; font-weight: 700; line-height: 1.25; margin-top: 8px; }
+.step .desc { font-size: 18px; line-height: 1.4; margin-top: 8px; }
 
-/* ===== 16. Sammenligning (to kolonner, check/kryds) ===== */
-.slide--compare .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; margin-top: 16px; }
-.compare-card {
-  border: 2px solid var(--color-ink);
-  background: var(--bg-paper);
-  padding: 26px;
-  display: flex; flex-direction: column;
+/* ===== Proces (lodret) ===== */
+.slide--process .steps { list-style: none; counter-reset: step; position: relative; margin-top: 6px; }
+.slide--process .steps::before {           /* den sorte linje gennem firkanterne */
+  content: ''; position: absolute; left: 12.5px; top: 14px; bottom: 14px; width: 3px; background: var(--black);
 }
-.compare-card.is-win { box-shadow: var(--shadow-accent); }
-.compare-card .chead {
-  font-family: var(--font-mono);
-  font-size: 13px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  padding-bottom: 14px; margin-bottom: 14px;
-  border-bottom: 2px solid var(--color-ink);
+.slide--process .steps li {
+  counter-increment: step;
+  position: relative;
+  display: flex; align-items: center;
+  height: 28px; margin-bottom: 42px;
+  padding-left: 94px;
+  font-size: 22px; font-weight: 700;
 }
-.compare-card .citem { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; font-size: 18px; }
-.compare-card .mk { width: 20px; height: 20px; flex: none; margin-top: 2px; }
-.compare-card .mk.yes { background: var(--color-success); }
-.compare-card .mk.no { background: var(--color-red); }
+.slide--process .steps li:last-child { margin-bottom: 0; }
+.slide--process .steps li::before {
+  content: ''; position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; background: var(--paper); border: 3px solid var(--black);
+}
+.slide--process .steps li::after {
+  content: counter(step, decimal-leading-zero);
+  position: absolute; left: 48px;
+  font-family: var(--font-mono); font-size: 15px; color: var(--laks-text);
+}
+.slide--process .steps:has(.is-current) li:not(.is-current) { color: var(--dim); }
+.slide--process .steps:has(.is-current) li:not(.is-current)::before { border-color: #b5b5b5; }
+.slide--process .steps:has(.is-current) li:not(.is-current)::after { color: var(--dim); }
+.slide--process .steps li.is-current::before { background: var(--brand); }
 
-/* ===== 17. Stort tal (single focal stat) ===== */
+/* ===== Citat / udsagn ===== */
+.slide--statement { justify-content: center; }
+.slide--statement .quote-wrap { border-left: 6px solid var(--laks); padding-left: 28px; max-width: 1000px; }
+.slide--statement .quote { font-size: 44px; line-height: 1.25; }
+.slide--statement .eyebrow { margin-bottom: 16px; }
+.slide--statement .source {
+  margin-top: 24px;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+/* Med overskrift: citatet står centreret i fladen under titelblokken */
+.slide--statement:has(.slide-title) { justify-content: flex-start; }
+.slide--statement:has(.slide-title) .quote-wrap { margin: auto; max-width: 960px; }
+.slide--statement:has(.slide-title) .quote { font-size: 40px; }
+
+/* ===== Citat med portræt ===== */
+.slide--testimonial { justify-content: center; }
+.slide--testimonial .layout { display: grid; grid-template-columns: 300px 1fr; gap: 72px; align-items: center; padding-left: var(--offset); }
+.slide--testimonial .avatar { width: 300px; height: 300px; }
+.slide--testimonial .quote-wrap { border-left: 6px solid var(--laks); padding-left: 28px; }
+.slide--testimonial .quote { font-size: 34px; line-height: 1.25; }
+.slide--testimonial .who { margin-top: 26px; }
+.slide--testimonial .who .name { font-size: 22px; font-weight: 700; }
+.slide--testimonial .who .role {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin-top: 6px;
+}
+
+/* ===== Billede + tekst / hero =====
+   Højst én "hård" ting pr. slide: billedet har den grønne flade, så
+   overskriften står fri (.slide-h2) — ingen titelblok her. */
+.slide--image-text, .slide--hero { padding-top: 125px; padding-bottom: 0; }
+.slide--image-text .layout, .slide--hero .layout {
+  display: grid;
+  grid-template-columns: 1fr var(--media);
+  gap: 96px;
+  height: calc(var(--media) + var(--offset));
+  padding-right: var(--offset);
+}
+.slide--image-text .media, .slide--hero .media { width: var(--media); height: var(--media); grid-column: 2; grid-row: 1; }
+.slide--image-text .text-col, .slide--hero .text-col {
+  grid-column: 1; grid-row: 1;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.slide--image-text.is-image-left .layout, .slide--hero.is-image-left .layout {
+  grid-template-columns: var(--media) 1fr;
+  padding-right: 0; padding-left: var(--offset);
+}
+.slide--image-text.is-image-left .media, .slide--hero.is-image-left .media { grid-column: 1; }
+.slide--image-text.is-image-left .text-col, .slide--hero.is-image-left .text-col { grid-column: 2; }
+.text-col .eyebrow { margin-bottom: 14px; }
+.text-col .lead, .text-col .body { margin-top: 24px; }
+.text-col .bullets { margin-top: 28px; gap: 18px; }
+.slide--hero .slide-h2 { font-size: 60px; }
+/* Frilagt motiv (PNG med gennemsigtighed): ingen ramme, ingen grøn flade */
+.media.is-free { background: none; box-shadow: none; }
+.media.is-free > img { object-fit: contain; }
+
+/* ===== Billed-gitter ===== */
+.slide--image-grid .grid { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 20px; flex: 1; }
+.slide--image-grid.cols-3 .grid { grid-template-columns: 1fr 1fr 1fr; }
+.slide--image-grid.cols-4 .grid { grid-template-columns: repeat(4, 1fr); }
+
+/* ===== Fuldt billede med titelblok (cover) ===== */
+.slide--cover, .slide--image-full { padding: 0; }
+.slide--cover > .img, .slide--image-full > .img { position: absolute; inset: 0; }
+.slide--cover .overlay {
+  position: absolute;
+  left: var(--pad-x); bottom: 76px;
+  background: var(--black);
+  color: #fff;
+  padding: 24px 36px;
+  box-shadow: 12px 12px 0 var(--brand);
+  max-width: 820px;
+}
+.slide--cover .overlay .slide-display { font-size: 52px; line-height: 1.08; padding: 0; box-shadow: none; background: none; }
+.slide--cover .overlay .lead { font-size: 22px; line-height: 1.4; margin-top: 14px; color: #fff; }
+
+/* ===== Fuldt billede med billedtekst ===== */
+.slide--image-full .caption {
+  position: absolute;
+  left: var(--pad-x); bottom: 62px;
+  background: var(--black);
+  color: #fff;
+  padding: 12px 20px;
+  box-shadow: 6px 6px 0 var(--brand);
+  display: flex; gap: 18px; align-items: baseline;
+}
+.slide--image-full .caption .kicker { color: var(--laks); }
+.slide--image-full .caption .t { font-size: 20px; font-weight: 700; }
+
+/* ===== Stort tal ===== */
 .slide--bignum { justify-content: center; }
+.slide--bignum:has(.slide-title) { justify-content: flex-start; }
+.slide--bignum:has(.slide-title) .big { margin-top: auto; }
+.slide--bignum:has(.slide-title) .sub { margin-bottom: auto; }
 .slide--bignum .big {
   font-family: var(--font-mono);
   font-size: 200px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
+  line-height: 1;
 }
-.slide--bignum .big .unit { font-size: 90px; }
-.slide--bignum .big.is-up { color: var(--color-success); }
-.slide--bignum .big.is-down { color: var(--color-red); }
-.slide--bignum .sub { font-size: 26px; color: var(--color-ink-soft); margin-top: 12px; max-width: 30ch; }
+.slide--bignum .big .unit { font-family: var(--font-sans); font-size: 0.45em; margin-left: 0.12em; }
+.slide--bignum .big.is-up { color: var(--brand); }
+.slide--bignum .big.is-down { color: var(--laks-text); }
+.slide--bignum .sub { font-size: 24px; line-height: 1.45; margin-top: 20px; max-width: 640px; }
 
-/* ===== 18. Søjlediagram (vandret) ===== */
-.slide--bars .chart { margin-top: 28px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
-.bar-row { display: grid; grid-template-columns: 200px 1fr 90px; align-items: center; gap: 18px; }
-.bar-row .lbl { font-size: 18px; }
-.bar-row .track { height: 34px; background: var(--bg-paper); border: 2px solid var(--color-ink); }
-.bar-row .fill { height: 100%; background: var(--color-ink); }
-.bar-row.is-accent .fill { background: var(--color-red); }
-.bar-row .val {
-  font-family: var(--font-mono); font-weight: 700;
-  font-variant-numeric: tabular-nums; text-align: right; font-size: 18px;
+/* ===== Nøgletal ===== */
+.slide--stats .cards {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 32px;
+  margin: auto 0;
 }
+.stat-card {
+  background: var(--paper);
+  border: var(--border) solid var(--black);
+  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
+  height: 230px;
+  padding: 24px 32px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.stat-card.is-primary, .stat-card.is-accent { background: var(--hilite); }
+.stat-card .num {
+  font-family: var(--font-mono);
+  font-size: 60px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.stat-card .num.is-up { color: var(--brand); }
+.stat-card .num.is-down { color: var(--laks-text); }
+.stat-card .stat-label {
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim);
+  margin-top: 14px;
+}
+.stat-card.is-primary .stat-label { color: var(--ink); }
 
-/* ===== 19. Testimonial / citat med portræt ===== */
-.slide--testimonial .layout { display: grid; grid-template-columns: 220px 1fr; gap: 40px; flex: 1; align-items: center; }
-.slide--testimonial .avatar { width: 220px; height: 220px; }
-.slide--testimonial .quote {
-  font-size: 34px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;
-  border-left: 6px solid var(--color-red); padding-left: 28px;
+/* ===== Søjler (vandrette) ===== */
+.slide--bars .chart {
+  margin: auto 0;
+  display: grid; grid-template-columns: 240px 1fr; row-gap: 30px; align-items: center;
 }
-.slide--testimonial .who { margin-top: 22px; margin-left: 34px; }
-.slide--testimonial .who .name { font-size: 18px; font-weight: 700; }
-.slide--testimonial .who .role {
-  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
-  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-muted); margin-top: 4px;
+.bar-row { display: contents; }
+.bar-row .lbl { font-size: 20px; }
+.bar-row .track { display: flex; align-items: center; gap: 14px; border-left: 3px solid var(--black); padding: 0; margin: -15px 0; height: 64px; }
+.bar-row .fill { height: 34px; background: var(--black); max-width: calc(100% - 120px); }
+.bar-row .val { font-family: var(--font-mono); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 20px; }
+.bar-row.is-accent .lbl { font-weight: 700; }
+.bar-row.is-accent .fill { background: var(--brand); }
+.bar-row.is-accent .val { color: var(--brand); }
+
+/* ===== Tabel ===== */
+.slide--table table {
+  width: 100%;
+  border-collapse: collapse;
+  border: var(--border) solid var(--black);
+  box-shadow: var(--shadow) var(--shadow) 0 var(--black);
+  background: var(--paper);
+  font-size: 20px;
 }
+.slide--table thead th {
+  background: var(--black);
+  color: #fff;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-align: left;
+  height: 46px; padding: 0 18px;
+}
+.slide--table th.num, .slide--table td.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.slide--table tbody td { height: 54px; padding: 0 18px; border-top: 1px solid var(--rule); }
+.slide--table tbody tr:first-child td { border-top: none; }
+.slide--table tbody tr.is-highlight td { background: var(--hilite); font-weight: 700; border-top-color: var(--hilite); }
+.slide--table tbody tr.is-highlight + tr td { border-top-color: var(--hilite); }
+
+/* =====================================================
+   BAGUDKOMPATIBILITET — ældre decks må ikke gå i stykker
+   ===================================================== */
+.slide__footer { display: none; }                         /* footer-striben findes ikke længere */
+.slide > .kicker, .slide--title .frame > .kicker { display: none; }   /* ingen eyebrow over en titelblok */
+.slide--section.is-brand, .slide--section.is-dark, .slide--section.is-yellow { background: var(--ground); color: inherit; }
 
 /* ---------- Deck-chrome (uden for sliden) ---------- */
 .deck__hud {
   position: fixed;
   bottom: 18px; left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: #888;
   z-index: 10;
 }
-.deck__hud .bar { width: 160px; height: 4px; background: #333; }
-.deck__hud .bar > i { display: block; height: 100%; background: var(--color-red); width: 0; }
+.deck__hud .bar { display: block; width: 160px; height: 4px; background: #333; }
+.deck__hud .bar > i { display: block; height: 100%; background: var(--laks); width: 0; }
 
 @media print {
-  html, body { background: #fff; overflow: visible; }
+  @page { size: 1280px 720px; margin: 0; }
+  html, body { background: #fff; overflow: visible; height: auto; }
   .deck, .deck__stage { position: static; transform: none !important; display: block; }
-  .slide { display: flex !important; page-break-after: always; box-shadow: none; margin: 0 auto; }
+  .slide { display: flex !important; position: relative; page-break-after: always; break-after: page; }
   .deck__hud { display: none; }
-}
-
-/* =====================================================
-   ØS-identitet — grøn bruges SPARSOMT
-   Grøn lever kun her: titel-accent, section-dividers, logo,
-   titel-rammens shadow, positive tal, closing-CTA.
-   Alt andet er sort/hvid/gul som resten af systemet.
-   ===================================================== */
-
-/* ---------- Kun ÉN overskrift pr. slide ----------
-   Kicker-eyebrow'en OVER titlen er fjernet: den sorte titel står alene.
-   (Sub-labels i kolonner og billed-captions beholdes — de er ikke overskrifter.) */
-.slide > .kicker,
-.slide--title .frame > .kicker,
-.slide--cover .overlay > .kicker { display: none; }
-.slide--image-full .caption .kicker { color: #fff; }   /* hvid i den sorte caption-stribe */
-
-/* ---------- Grøn titel-accent ----------
-   Kort bjælke der sidder TÆT under overskriften og flugter med dens
-   venstrekant. Den hører til titlen — den må aldrig svæve nede i indholdet. */
-.slide-title { position: relative; }
-.slide-title::after {
-  content: '';
-  display: block;
-  width: 66px;
-  height: 8px;
-  margin: 5px 0 0 0;             /* = 13px under baselinen, som i PPTX */
-  background: var(--color-brand);
-}
-
-/* Fast luft mellem "overskrift + accent" og indholdet — ens i ALLE slide-typer.
-   Uden denne regel bestemmer hver enkelt layout-klasse selv sin margin-top, og
-   afstanden svinger fra 8px til 36px alt efter slide-type. */
-.slide .slide-title { margin-bottom: 30px; }
-.slide .slide-title + * { margin-top: 0; }
-
-/* Title-slide: grøn offset-shadow på rammen (ikke en grøn topkant) */
-.slide--title .frame { box-shadow: 8px 8px 0 var(--color-brand); }
-
-/* ---------- Section divider: ØS-grøn fuldflade ----------
-   Det stærke brand-moment mellem kapitler. Hvid tekst + hvidt logo. */
-.slide--section.is-brand {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
-  color: #fff;
-}
-.slide--section.is-brand .kicker { color: rgba(255, 255, 255, 0.75); }
-.slide--section.is-brand .num { color: rgba(255, 255, 255, 0.9); }
-
-/* ---------- Officielt ØS-logo nederst til højre ----------
-   Logoet er hængt op på SLIDEN — ikke på footeren. Footeren er en flex-item,
-   og på slides med align-items: flex-start (section, closing) klapper den
-   sammen til nul bredde, så et logo i den ville lande nede til VENSTRE.
-   Her sidder det altid i højre hjørne med ens luft til højre og bund. */
-.slide::after {
-  content: '';
-  position: absolute;
-  right: 27px;
-  bottom: 27px;
-  width: 150px;
-  height: 41px;                 /* korrekt aspect (242x66) — ingen skalering væk */
-  background: url('assets/oes-logo-green.png') right bottom / contain no-repeat;
-  pointer-events: none;
-}
-/* Hvid logo på mørke/grønne flader (jf. brandguiden) */
-.slide--section.is-brand::after,
-.slide--section.is-dark::after {
-  background-image: url('assets/oes-logo-white.png');
-}
-/* Cover og full-bleed billeder går helt til kanten — intet logo (ingen plads).
-   Samme regel i PPTX. */
-.slide--cover::after,
-.slide--image-full::after { content: none; }
-
-/* Footer-striben bærer ikke længere noget: deck-titlen er redundant (logoet
-   siger det), side-nummeret er fjernet, og logoet sidder på sliden. Den er
-   skjult — så æder dens margin-top: auto heller ikke pladsen på de slides der
-   skal centrere lodret (title, section, statement, closing). Reglen står
-   tilbage, så ældre decks med <div class="slide__footer"> stadig ser rigtige ud. */
-.slide__footer { display: none; }
-
-/* ---------- Kilde-/note-linje nederst til venstre ----------
-   "Kilde: Statens Regnskab, 2026" under tal, tabeller og grafer.
-   Absolut placeret som logoet, så den står ens på alle slide-typer og optisk
-   flugter med logoet i modsatte hjørne — uanset hvor højt indholdet er.
-   Mono = system/metadata, derfor uppercase. Virker på enhver .slide. */
-.slide__source {
-  position: absolute;
-  left: 64px;
-  bottom: 38px;
-  max-width: 800px;
-  font-family: var(--font-mono);
-  font-size: 17px;               /* = 13pt */
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-.slide--section.is-brand .slide__source,
-.slide--section.is-dark .slide__source { color: rgba(255, 255, 255, 0.7); }
-/* Er der en kilde-linje, skal indhold der fylder hele højden stoppe over den */
-.slide:has(.slide__source) { padding-bottom: 108px; }
-
-/* Closing-CTA: ØS-grøn flade som brand-sign-off */
-.slide--closing .cta {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

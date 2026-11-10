@@ -7,135 +7,210 @@
   <link rel="stylesheet" href="slides.css" />
 </head>
 <body>
+  <!-- GALLERI: ét eksempel på hver slide-type. Et bibliotek — ikke et deck der skal kopieres.
+       Samme slides, samme rækkefølge som deck.example.py (PowerPoint-galleriet). -->
   <div class="deck">
     <div class="deck__stage">
 
-      <!-- 1. TITLE — grøn offset-shadow på rammen + logo i hjørnet -->
+      <!-- 1. FORSIDE — stor sort titelblok med grøn skygge -->
       <section class="slide slide--title is-active">
         <div class="frame">
           <h1 class="slide-display">Årsrapport 2026</h1>
-          <p class="lead">Bærbar brutalisme med ØS-grøn som anker — grøn brugt sparsomt, ikke overalt.</p>
+          <p class="lead">Status på digitalisering, økonomi og de næste skridt.</p>
         </div>
         <p class="meta">Økonomistyrelsen · Ledelsesoverblik · August 2026</p>
       </section>
 
-      <!-- 2. AGENDA -->
+      <!-- 2. HERO — forside med billede: tekst til venstre, billede med grøn flade til højre -->
+      <section class="slide slide--hero">
+        <div class="layout">
+          <div class="text-col">
+            <p class="eyebrow">Forside med billede</p>
+            <h1 class="slide-h2">Ét samlet system</h1>
+            <p class="lead">Tekst til venstre, billede med grøn flade til højre.</p>
+          </div>
+          <div class="media img" data-label="Billede"><!-- <img src="…" alt="…"> --></div>
+        </div>
+      </section>
+
+      <!-- 3. AGENDA -->
       <section class="slide slide--agenda">
         <h2 class="slide-title">Agenda</h2>
         <div class="list">
           <div class="row"><span class="n">01</span><span class="t">Årets resultater</span></div>
           <div class="row is-current"><span class="n">02</span><span class="t">Digitalisering</span></div>
-          <div class="row"><span class="n">03</span><span class="t">Økonomi &amp; budget</span></div>
+          <div class="row"><span class="n">03</span><span class="t">Økonomi og budget</span></div>
           <div class="row"><span class="n">04</span><span class="t">Næste skridt</span></div>
         </div>
       </section>
 
-      <!-- 3. SECTION — grøn brand-flade + hvidt logo -->
-      <section class="slide slide--section is-brand">
-        <p class="num">01</p>
+      <!-- 4. KAPITEL — laks-label + sort titelblok. data-num sætter "01" foran de følgende titler -->
+      <section class="slide slide--section" data-num="01">
+        <p class="label">Del 1</p>
         <h2 class="slide-display">Årets resultater</h2>
       </section>
 
-      <!-- 4. CONTENT -->
+      <!-- 5. INDHOLD — titel + punkter -->
       <section class="slide slide--content">
-        <h2 class="slide-title">Tre fokusområder</h2>
+        <h2 class="slide-title">Fire fokusområder</h2>
         <ul class="bullets">
-          <li>Digitalisering af økonomiprocesser på tværs af staten.</li>
-          <li>Øget gennemsigtighed i statsregnskabet.</li>
-          <li class="is-accent">Stærkere datagrundlag for politiske beslutninger.</li>
-          <li>Reduktion af administrative byrder.</li>
+          <li><strong>Digitalisering:</strong> økonomiprocesser samles på tværs af staten.</li>
+          <li><strong>Gennemsigtighed:</strong> statsregnskabet bliver lettere at læse.</li>
+          <li class="is-accent"><strong>Datagrundlag:</strong> bedre tal til politiske beslutninger.</li>
+          <li><strong>Færre byrder:</strong> mindre administration for institutionerne.</li>
         </ul>
       </section>
 
-      <!-- 5. SPLIT -->
+      <!-- 6. TO SPALTER -->
       <section class="slide slide--split">
         <h2 class="slide-title">Før og efter</h2>
         <div class="cols">
-          <div class="col"><p class="kicker">Før</p><p class="body">Manuelle indberetninger, spredte systemer, lange svartider.</p></div>
-          <div class="divider"></div>
-          <div class="col"><p class="kicker">Efter</p><p class="body">Samlet platform, automatiske flows, realtids-overblik.</p></div>
+          <div class="col">
+            <p class="kicker">Før</p>
+            <h3 class="col-head">Spredte systemer</h3>
+            <p class="body">Manuelle indberetninger, mange indgange og lange svartider.</p>
+          </div>
+          <div class="divider">→</div>
+          <div class="col is-accent">
+            <p class="kicker">Efter</p>
+            <h3 class="col-head">Én samlet platform</h3>
+            <p class="body">Automatiske flows og overblik i realtid — ét sted at lede.</p>
+          </div>
         </div>
       </section>
 
-      <!-- 6. FEATURE-KORT -->
+      <!-- 7. SPALTER MED NUMMER -->
       <section class="slide slide--cards">
         <h2 class="slide-title">Tre indsatsområder</h2>
         <div class="grid">
-          <div class="feature"><div class="icon"></div><div class="ftitle">Effektivitet</div><div class="fbody">Færre manuelle trin gennem automatisering.</div></div>
-          <div class="feature is-accent"><div class="icon"></div><div class="ftitle">Gennemsigtighed</div><div class="fbody">Det fremhævede kort — gul flade, kun ét per slide.</div></div>
-          <div class="feature"><div class="icon"></div><div class="ftitle">Datagrundlag</div><div class="fbody">Bedre tal til politiske beslutninger.</div></div>
-        </div>
-      </section>
-
-      <!-- 7. TIMELINE -->
-      <section class="slide slide--timeline">
-        <h2 class="slide-title">Året i fire kvartaler</h2>
-        <div class="track">
-          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q1</div><div class="what">Analyse</div><div class="desc">Behov afdækkes.</div></div>
-          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q2</div><div class="what">Design</div><div class="desc">Løsninger formes.</div></div>
-          <div class="step is-current"><div class="dot"></div><div class="line"></div><div class="when">Q3</div><div class="what">Udrulning</div><div class="desc">Vi er her nu.</div></div>
-          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q4</div><div class="what">Evaluering</div><div class="desc">Læring og justering.</div></div>
+          <div class="feature"><div class="ftitle">Effektivitet</div><div class="fbody">Færre manuelle trin gennem automatisering.</div></div>
+          <div class="feature is-accent"><div class="ftitle">Gennemsigtighed</div><div class="fbody">Den fremhævede spalte bærer ØS-grøn — kun én pr. slide.</div></div>
+          <div class="feature"><div class="ftitle">Datagrundlag</div><div class="fbody">Bedre tal til politiske beslutninger.</div></div>
         </div>
       </section>
 
       <!-- 8. SAMMENLIGNING -->
       <section class="slide slide--compare">
-        <h2 class="slide-title">Før vs. efter</h2>
+        <h2 class="slide-title">Gammel og ny løsning</h2>
         <div class="cols">
           <div class="compare-card">
-            <div class="chead">Før</div>
+            <div class="chead">I dag</div>
+            <div class="citem"><span class="mk no"></span>Manuelle indberetninger</div>
             <div class="citem"><span class="mk no"></span>Spredte systemer</div>
-            <div class="citem"><span class="mk no"></span>Manuelle flows</div>
-            <div class="citem"><span class="mk yes"></span>Kendt af alle</div>
+            <div class="citem"><span class="mk yes"></span>Kendt af brugerne</div>
           </div>
           <div class="compare-card is-win">
-            <div class="chead">Efter</div>
-            <div class="citem"><span class="mk yes"></span>Samlet platform</div>
+            <div class="chead">Fremover</div>
             <div class="citem"><span class="mk yes"></span>Automatiske flows</div>
-            <div class="citem"><span class="mk yes"></span>Realtids-overblik</div>
+            <div class="citem"><span class="mk yes"></span>Samlet platform</div>
+            <div class="citem"><span class="mk yes"></span>Overblik i realtid</div>
           </div>
         </div>
       </section>
 
-      <!-- 9. SECTION (billed-kapitel) -->
-      <section class="slide slide--section is-brand">
-        <p class="num">02</p>
-        <h2 class="slide-display">Billed-layouts</h2>
-      </section>
-
-      <!-- 10. COVER / HERO -->
-      <section class="slide slide--cover">
-        <div class="img" data-label="Baggrundsbillede 16:9"><!-- <img src="..."> --></div>
-        <div class="overlay">
-          <h2 class="slide-display">Stort billede,<br>stærk åbning.</h2>
-          <p class="lead">Overlay-boks med hård shadow oven på fuldt baggrundsbillede.</p>
+      <!-- 9. TIDSLINJE -->
+      <section class="slide slide--timeline">
+        <h2 class="slide-title">Året i fire kvartaler</h2>
+        <div class="track">
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q1</div><div class="what">Analyse</div><div class="desc">Behovene afdækkes.</div></div>
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q2</div><div class="what">Design</div><div class="desc">Løsningerne formes.</div></div>
+          <div class="step is-current"><div class="dot"></div><div class="line"></div><div class="when">Q3 · nu</div><div class="what">Udrulning</div><div class="desc">Første institutioner er i gang.</div></div>
+          <div class="step"><div class="dot"></div><div class="line"></div><div class="when">Q4</div><div class="what">Evaluering</div><div class="desc">Læring og justering.</div></div>
         </div>
       </section>
 
-      <!-- 11. FULL-BLEED billede + caption -->
-      <section class="slide slide--image-full">
-        <div class="img" data-label="Full-bleed billede"><!-- <img src="..."> --></div>
-        <div class="caption"><span class="kicker">Foto</span><span class="t">Caption i sort stribe — mono-kicker + titel.</span></div>
+      <!-- 10. PROCES (lodret) -->
+      <section class="slide slide--process">
+        <h2 class="slide-title">Testprocessen</h2>
+        <ol class="steps">
+          <li>Kortlægning af antagelser</li>
+          <li>Testprotokol</li>
+          <li class="is-current">Pilottest</li>
+          <li>Rekruttering</li>
+          <li>Test</li>
+          <li>Dataanalyse</li>
+          <li>Formidling af indsigter</li>
+        </ol>
       </section>
 
-      <!-- 12. BILLEDE + TEKST -->
-      <section class="slide slide--image-text">
-        <h2 class="slide-title">Billede til venstre, tekst til højre</h2>
+      <!-- 11. BYG SELV — titel + forklaring + byggeklodser (post-its, kort, chips) -->
+      <section class="slide slide--content">
+        <h2 class="slide-title">Byg selv videre</h2>
+        <p class="sub">Post-its, kort og labels er byggeklodser.</p>
+        <div style="display:flex; gap:40px; justify-content:center; margin-top:20px">
+          <div class="sticky"><span>Én <strong>afgrænset</strong> antagelse</span></div>
+          <div class="sticky"><span>Kan <strong>testes</strong></span></div>
+          <div class="sticky"><span>Har et <strong>skarpt</strong> mål</span></div>
+        </div>
+      </section>
+
+      <!-- 12. KAPITEL -->
+      <section class="slide slide--section" data-num="02">
+        <p class="label">Del 2</p>
+        <h2 class="slide-display">Citater og billeder</h2>
+      </section>
+
+      <!-- 13. CITAT under en overskrift — <mark> giver lysegrøn overstregning -->
+      <section class="slide slide--statement">
+        <h2 class="slide-title">Hvad er UX?</h2>
+        <div class="quote-wrap">
+          <blockquote class="quote">“A person's perceptions and responses that result from the <mark>use or anticipated use</mark> of a product, system or service.”</blockquote>
+          <p class="source">— ISO 9241-210</p>
+        </div>
+      </section>
+
+      <!-- 14. UDSAGN alene -->
+      <section class="slide slide--statement">
+        <div class="quote-wrap">
+          <blockquote class="quote">Gode beslutninger bygger på pålidelige tal.</blockquote>
+          <p class="source">— Økonomistyrelsen</p>
+        </div>
+      </section>
+
+      <!-- 15. CITAT MED PORTRÆT -->
+      <section class="slide slide--testimonial">
         <div class="layout">
-          <div class="media img" data-label="Billede"><!-- <img src="..."> --></div>
+          <div class="avatar media is-left img" data-label="Portræt"><!-- <img src="…" alt="…"> --></div>
+          <div class="quote-wrap">
+            <blockquote class="quote">“Vi fik ét sted at lede — og tallene stemmer første gang.”</blockquote>
+            <div class="who"><div class="name">Navn Efternavn</div><div class="role">Økonomichef, institution</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 16. BILLEDE + TEKST (billedet til venstre) -->
+      <section class="slide slide--image-text is-image-left">
+        <div class="layout">
+          <div class="media is-left img" data-label="Billede"><!-- <img src="…" alt="…"> --></div>
           <div class="text-col">
-            <ul class="bullets" style="margin-top:0">
-              <li>Halv-til-halv layout med skarpt billed-felt.</li>
-              <li>Brug <code>is-image-left</code> for spejlet variant.</li>
-              <li class="is-accent">Billedet får 2px sort kant som alt andet.</li>
+            <h2 class="slide-h2">Billede og tekst</h2>
+            <ul class="bullets">
+              <li>Billedet står i en fast kvadratisk ramme.</li>
+              <li>Den grønne flade er forskudt bagved.</li>
+              <li><code>is-image-left</code> spejler layoutet.</li>
             </ul>
           </div>
         </div>
       </section>
 
-      <!-- 13. BILLED-GRID -->
+      <!-- 17. BILLEDE + TEKST (billedet til højre, med eyebrow) -->
+      <section class="slide slide--image-text">
+        <div class="layout">
+          <div class="text-col">
+            <p class="eyebrow">Frilagt: class="media is-free"</p>
+            <h2 class="slide-h2">Frilagt motiv</h2>
+            <ul class="bullets">
+              <li>Uden billede vises en pladsholder.</li>
+              <li>Med <code>is-free</code> står et frilagt PNG uden flade.</li>
+            </ul>
+          </div>
+          <div class="media img" data-label="Billede"><!-- <img src="…" alt="…"> --></div>
+        </div>
+      </section>
+
+      <!-- 18. BILLED-GITTER -->
       <section class="slide slide--image-grid cols-3">
-        <h2 class="slide-title">Billed-grid</h2>
+        <h2 class="slide-title">Billed-gitter</h2>
         <div class="grid">
           <div class="img" data-label="01"></div>
           <div class="img" data-label="02"></div>
@@ -146,57 +221,61 @@
         </div>
       </section>
 
-      <!-- 14. TESTIMONIAL -->
-      <section class="slide slide--testimonial">
-        <div class="layout">
-          <div class="avatar img" data-label="Portræt"><!-- <img src="..."> --></div>
-          <div>
-            <blockquote class="quote">“Gode beslutninger bygger på pålidelige tal.”</blockquote>
-            <div class="who"><div class="name">Økonomistyrelsen</div><div class="role">Statens økonomiforvaltning</div></div>
-          </div>
+      <!-- 19. FULDT BILLEDE MED TITELBLOK -->
+      <section class="slide slide--cover">
+        <div class="img" data-label="Baggrundsbillede 16:9"><!-- <img src="…" alt="…"> --></div>
+        <div class="overlay">
+          <h2 class="slide-display">Stort billede, stærk åbning</h2>
+          <p class="lead">Sort titelblok med grøn skygge oven på et billede i fuld flade.</p>
         </div>
       </section>
 
-      <!-- 15. SECTION -->
-      <section class="slide slide--section is-brand">
-        <p class="num">03</p>
-        <h2 class="slide-display">Data &amp; resultater</h2>
+      <!-- 20. FULDT BILLEDE MED BILLEDTEKST -->
+      <section class="slide slide--image-full">
+        <div class="img" data-label="Fuldt billede"><!-- <img src="…" alt="…"> --></div>
+        <div class="caption"><span class="kicker">Foto</span><span class="t">Billedtekst i sort blok oven på et billede i fuld flade.</span></div>
       </section>
 
-      <!-- 16. STORT TAL -->
+      <!-- 21. KAPITEL -->
+      <section class="slide slide--section" data-num="03">
+        <p class="label">Del 3</p>
+        <h2 class="slide-display">Data og resultater</h2>
+      </section>
+
+      <!-- 22. STORT TAL -->
       <section class="slide slide--bignum">
         <div class="big is-up">+18<span class="unit">%</span></div>
-        <p class="sub">Effektivisering år over år — ét tal, fuld fokus. Positivt tal bærer ØS-grøn.</p>
+        <p class="sub">Effektivisering år over år. Ét tal, fuld opmærksomhed.</p>
         <p class="slide__source">Kilde: Statens Regnskab, 2026</p>
       </section>
 
-      <!-- 17. STATS / KPI -->
+      <!-- 23. NØGLETAL -->
       <section class="slide slide--stats">
         <h2 class="slide-title">Året i tal</h2>
         <div class="cards">
-          <div class="stat-card"><div class="num">1,2 mio</div><div class="stat-label">Behandlede bilag</div></div>
-          <div class="stat-card is-primary is-accent"><div class="num is-up">+18%</div><div class="stat-label">Effektivisering</div></div>
-          <div class="stat-card"><div class="num">99,8</div><div class="stat-label">Oppetid %</div></div>
+          <div class="stat-card"><div class="num">1,2 mio.</div><div class="stat-label">Behandlede bilag</div></div>
+          <div class="stat-card is-primary"><div class="num is-up">+18 %</div><div class="stat-label">Effektivisering</div></div>
+          <div class="stat-card"><div class="num">99,8 %</div><div class="stat-label">Oppetid</div></div>
         </div>
         <p class="slide__source">Kilde: Statens Regnskab, 2026</p>
       </section>
 
-      <!-- 18. SØJLEDIAGRAM -->
+      <!-- 24. SØJLER -->
       <section class="slide slide--bars">
         <h2 class="slide-title">Budget pr. område</h2>
         <div class="chart">
-          <div class="bar-row"><span class="lbl">Drift</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">240</span></div>
-          <div class="bar-row is-accent"><span class="lbl">Udvikling</span><span class="track"><span class="fill" style="width:49%"></span></span><span class="val">118</span></div>
-          <div class="bar-row"><span class="lbl">Support</span><span class="track"><span class="fill" style="width:27%"></span></span><span class="val">64</span></div>
+          <div class="bar-row"><span class="lbl">Drift</span><span class="track"><span class="fill" style="width:100%"></span><span class="val">240</span></span></div>
+          <div class="bar-row is-accent"><span class="lbl">Udvikling</span><span class="track"><span class="fill" style="width:49%"></span><span class="val">118</span></span></div>
+          <div class="bar-row"><span class="lbl">Support</span><span class="track"><span class="fill" style="width:27%"></span><span class="val">64</span></span></div>
         </div>
-        <p class="slide__source">Kilde: Statens Regnskab, 2026</p>
+        <p class="slide__source">Mio. kr. Kilde: Statens Regnskab, 2026</p>
       </section>
 
-      <!-- 19. TABEL -->
+      <!-- 25. TABEL -->
       <section class="slide slide--table">
         <h2 class="slide-title">Budgetoversigt</h2>
         <table>
-          <thead><tr><th>Område</th><th>Ansvar</th><th class="num">Budget (mio)</th><th class="num">Afvigelse</th></tr></thead>
+          <thead><tr><th>Område</th><th>Ansvar</th><th class="num">Budget, mio. kr.</th><th class="num">Afvigelse</th></tr></thead>
           <tbody>
             <tr><td>Drift</td><td>ØS</td><td class="num">240</td><td class="num">−2</td></tr>
             <tr class="is-highlight"><td>Udvikling</td><td>ØS</td><td class="num">118</td><td class="num">+5</td></tr>
@@ -206,16 +285,11 @@
         <p class="slide__source">Kilde: Statens Regnskab, 2026</p>
       </section>
 
-      <!-- 20. STATEMENT -->
-      <section class="slide slide--statement">
-        <blockquote class="quote">Gode beslutninger bygger på pålidelige tal.</blockquote>
-        <p class="source">— Økonomistyrelsen</p>
-      </section>
-
-      <!-- 21. CLOSING — grøn CTA + logo -->
+      <!-- 26. AFSLUTNING -->
       <section class="slide slide--closing">
-        <h2 class="slide-display">Tak.</h2>
-        <a class="cta">oes@oes.dk →</a>
+        <h2 class="slide-display">Tak</h2>
+        <p class="lead">Spørgsmål og kommentarer er velkomne.</p>
+        <a class="cta">oes@oes.dk</a>
       </section>
 
     </div>

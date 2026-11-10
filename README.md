@@ -1,73 +1,92 @@
 # Økonomistyrelsens slide-system
 
-Slide-system til **HTML-slides** og **PowerPoint** — bærbar brutalisme med ØS-grøn
-som identitets-anker. **Én stil**, ét galleri af alle slide-typer.
+Slide-system til **PowerPoint** og **HTML-slides**: lys grå grund, titler i sorte blokke med
+grøn skygge, laks-labels, billeder med en grøn flade forskudt bagved, IBM Plex Sans + Mono.
+**Én stil**, 22 slide-typer, og byggeklodser til egne diagrammer.
 
-## Galleri (GitHub Pages)
+![Alle slide-typer](galleri.png)
 
-- **Alle slide-typer** → [`template.html`](template.html)
+## Galleri
 
-(Når Pages er slået til ligger det på `https://<bruger>.github.io/morten-slides/`.)
+- **HTML:** [`template.html`](template.html) — pil/mellemrum/klik navigerer, Ctrl/Cmd+P printer til PDF.
+- **PowerPoint:** [`example.pptx`](example.pptx) — bygget af `deck.example.py`.
+
+## Brug
+
+```bash
+pip install python-pptx pillow fonttools lxml
+python deck.example.py        # -> example.pptx + preview/slide-NN.png
+```
+
+```python
+from build_pptx import Deck
+
+deck = Deck()
+deck.title("Årsrapport 2026", lead="Status og næste skridt.", meta="Økonomistyrelsen · August 2026")
+deck.section("Årets resultater", num="01")
+deck.content("Fire fokusområder", [("Digitalisering: ", "økonomiprocesser samles."), "…"])
+deck.stats([{"num": "+18 %", "label": "Effektivisering", "trend": "up"}], title="Året i tal",
+           source="Kilde: Statens Regnskab, 2026")
+deck.save("mit-deck.pptx", preview_dir="preview-mit-deck")
+```
+
+`preview_dir` giver et PNG pr. slide, tegnet med de rigtige IBM Plex-metrikker — så layoutet
+kan tjekkes uden PowerPoint. `save()` advarer, hvis tekst ikke kan være i sin boks.
 
 ## Indhold
 
 | Fil | Hvad |
 |---|---|
-| `template.html` | Galleri: ét eksempel pr. slide-type (reference — ikke en deck at kopiere) |
-| `slides.css` | Al styling + ØS-identitet. Ét stylesheet, intet tema-valg |
-| `slides.js` | Tastaturnavigation + fit-to-viewport |
-| `build_pptx.py` | PowerPoint-generator (`Deck()`) |
+| `build_pptx.py` | **Stilen:** tokens, byggeklodser (`card`, `block`, `chip`, `square_list`, `sticky`, `picture`) og `Deck` med alle slide-typer |
+| `oes_pptx.py` | **Motoren:** elementer, tekst-ombrydning, .pptx-skrivning, PNG-preview, font-indlejring |
 | `deck.example.py` | Galleriet i PPTX-form → `example.pptx` |
-| `PRESENTATIONS.md` | Brandguide (læses før et deck genereres) |
+| `template.html` | Galleriet i HTML-form |
+| `slides.css` / `slides.js` | Al HTML-styling + navigation. Samme mål og farver som `build_pptx.py` |
+| `PRESENTATIONS.md` | Den fulde guide: DNA, farver, typeskala, faste mål, slide-typer |
 | `CLAUDE.md` | Entry point for Claude Code |
-| `assets/` | Officielle ØS-logoer (grøn + hvid, transparente) |
-| `assets/fonts/` | IBM Plex Sans + Mono (TTF) der indlejres i .pptx, med OFL-licens |
-| `verify.py` | Regressionstjek af alle faste mål, font-indlejring og galleri-dækning |
-| `slides-oes.css` | Udfaset shim der importerer `slides.css` — så ældre decks stadig virker |
+| `verify.py` | Regressionstjek af hele systemet |
+| `tjek_pptx.py` | Lag- og kontrasttjek af en vilkårlig .pptx |
+| `assets/` | ØS-logoer + IBM Plex Sans/Mono (`fonts/`, med OFL-licens) |
+| `slides-oes.css` | Udfaset shim der importerer `slides.css` |
 
-## Fonte følger med filen
+## De faste mål
 
-PowerPoint refererer fonte ved navn — mangler IBM Plex på maskinen der åbner filen,
-erstattes den lydløst med Calibri, og decket mister mono/sans-forskellen der bærer
-systemet. Derfor **indlejres IBM Plex i hver genereret .pptx**: typografien holder
-på en låst VDI, hos modtagere og på mødelokale-PC'en.
+Alt måles i px på et 1280 × 720-canvas — de samme tal i PPTX og HTML.
 
-Fontfilerne ligger i `assets/fonts/` (fra [github.com/IBM/plex](https://github.com/IBM/plex),
-v6.4.0). IBM Plex er OFL-licenseret; `assets/fonts/LICENSE.txt` skal følge med.
-Det koster ca. 0,5 MB pr. fil — slå fra med `Deck(embed_fonts=False)`.
-
-## Brug
-
-- **HTML:** åbn `template.html` i browseren. Pil/mellemrum/klik navigerer. Cmd/Ctrl+P → print til PDF.
-- **PowerPoint:** `pip install python-pptx`, så `python deck.example.py`.
+| | px | `build_pptx.py` | `slides.css` |
+|---|---|---|---|
+| Sidemargin | 88 | `PAD_X` | `--pad-x` |
+| Titelblok, top | 64 | `TITLE_Y` | `--title-y` |
+| Indhold | 176 → 640 | `CONTENT_TOP` / `CONTENT_BOT` | `--content-top` / `--pad-bottom` |
+| Billedramme | 470 @ 125 | `MEDIA` / `MEDIA_Y` | `--media` |
+| Grøn flade bag billeder | 24 | `OFFSET` | `--offset` |
+| Kant / hård skygge | 3 / 8 | `BORDER` / `SHADOW` | `--border` / `--shadow` |
+| Logo, hjørne-luft | 32 | `LOGO_INSET` | `.slide::after` |
+| Kilde-linje, underkant | 682 | `SOURCE_BOTTOM` | `.slide__source` |
 
 ## Tjek at intet er skredet
 
 ```bash
-python verify.py
+python verify.py                # hele systemet
+python verify.py mit-deck.pptx  # ét deck: geometri, fonte, lag og kontrast
 ```
 
-Bygger galleriet og kontrollerer de invarianter der før blev rettet i hånden deck
-efter deck: at konstanterne stadig er referencedeckenes mål, at den genererede
-.pptx følger dem, at IBM Plex faktisk ligger indlejret i filen, at `slides.css`
-og `build_pptx.py` taler om samme mål, at galleriet viser hver slide-type, og at
-der ikke er efterladt kicker-labels over overskrifter. Exit-kode 1 ved fejl.
+Bygger galleriet og kontrollerer referencemålene, geometrien i den genererede fil,
+font-indlejringen, at `slides.css` og `build_pptx.py` har samme mål og farver, at begge
+gallerier viser hver slide-type, at ingen tekst er dækket eller under WCAG AA-kontrast, og
+at ingen tekst flyder ud af sin boks. Exit-kode 1 ved fejl.
 
-Kør det efter enhver ændring i `build_pptx.py` eller `slides.css` — der er ingen
-PowerPoint- eller browser-rendering i pipelinen, så målene kan ellers skride
-uden at nogen ser det.
+## Fonte følger med filen
 
-## De faste mål
+IBM Plex **indlejres i hver genereret .pptx** (som EOT), så typografien holder på en låst
+VDI, hos modtagere og på mødelokale-PC'en. `slides.css` bruger de samme filer via
+`@font-face`, så HTML-slides virker offline. Fontfilerne ligger i `assets/fonts/`
+(fra [github.com/IBM/plex](https://github.com/IBM/plex), v6.4.0, OFL — `LICENSE.txt` skal
+følge med). Slå indlejring fra med `Deck(embed_fonts=False)`.
 
-Overskrift, den grønne accent-linje og logoet placeres automatisk og må ikke sættes pr. slide:
+## Ældre decks
 
-| | PPTX (13.333 × 7.5") | HTML (1280 × 720 px) |
-|---|---|---|
-| Overskrift, top | 0.50" | 64px |
-| Grøn accent, top | 3,26 cm | 5px under titlens linjeboks |
-| Indhold | 1.70" → 6.60" | 64px → 642px |
-| Logo, hjørne-luft | 0.28" | 27px |
-| Forsidens kasse | 11.0" × 4.0" @ 1.70" | 1056 × 384px @ 163px |
-| Kilde-linje | 6.85" | 657px |
-
-Konstanterne står i toppen af `build_pptx.py` og i `:root` i `slides.css`. Ret dem der.
+Gamle deck-scripts kører uændret: `Deck`-metoderne har samme navne og argumenter som før
+(`title`, `section`, `content`, `split`, `stats`, `table`, …) — de tegner blot i den nye stil.
+Ældre HTML-decks der linker `slides.css` får også den nye stil; `image-text`-slides bør
+flytte overskriften ind i `.text-col` som `<h2 class="slide-h2">` (se `template.html`).

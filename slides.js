@@ -1,5 +1,5 @@
 /* =====================================================
-   Morten DS — Slide-framework runtime
+   Økonomistyrelsen — Slide-framework runtime
    Tastaturnavigation + fit-to-viewport-skalering.
    Ingen dependencies. Inkludér efter slides i HTML.
    ===================================================== */
@@ -9,6 +9,15 @@
   if (!stage || slides.length === 0) return;
 
   let index = 0;
+
+  // Delnummer foran titlerne: et kapitel (<section class="slide slide--section" data-num="01">)
+  // sætter "01" i titelblokken på alle efterfølgende slides, indtil næste kapitel.
+  let part = null;
+  slides.forEach((s) => {
+    if (s.classList.contains('slide--section')) { part = s.dataset.num || null; return; }
+    const t = s.querySelector('.slide-title');
+    if (t && part && !t.hasAttribute('data-part')) t.setAttribute('data-part', part);
+  });
 
   // HUD (kun progress-bar — intet side-nummer)
   const hud = document.createElement('div');
